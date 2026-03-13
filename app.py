@@ -4,12 +4,12 @@ import joblib
 import time
 
 # --- 1. PAGE SETUP & GLOWING UI ---
-st.set_page_config(page_title="AutoPredict AI Pro", page_icon="💎", layout="wide")
+st.set_page_config(page_title="AutoPredict AI Pro", page_icon="🏎️", layout="wide")
 
 st.markdown("""
     <style>
     .stApp {
-        background: radial-gradient(circle at top right, #001f3f, #000000);
+        background: radial-gradient(circle at top right, #051937, #000000);
         color: #e0e0e0;
     }
     .glass-card {
@@ -19,23 +19,13 @@ st.markdown("""
         border-radius: 20px;
         padding: 30px;
         margin-bottom: 25px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     }
     .stButton>button {
         background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
         color: white;
-        border: none;
-        padding: 15px 30px;
         border-radius: 50px;
         font-weight: bold;
-        transition: all 0.3s ease-in-out;
         width: 100%;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }
-    .stButton>button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0 20px #00d2ff;
     }
     .ink-title {
         background: -webkit-linear-gradient(#00d2ff, #91eaff);
@@ -55,85 +45,94 @@ def load_assets():
     s = joblib.load('scaler.joblib')
     return m, e, s
 
-model, encoder, scaler = load_assets()
+try:
+    model, encoder, scaler = load_assets()
+except:
+    st.error("Model files not found. Ensure .pkl and .joblib files are in the main GitHub folder.")
+    st.stop()
 
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-# --- SECTION 1: WELCOME & VIBE ---
+# --- SECTION 1: WELCOME ---
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.markdown('<h1 class="ink-title">💎 AUTO-PREDICT AI PRO</h1>', unsafe_allow_html=True)
-st.write("### The Gold Standard in 2026 Vehicle Valuation.")
-st.write("Enter your vehicle details below to run our neural-network market analysis.")
+st.markdown('<h1 class="ink-title">🏎️ USA CAR VALUATOR PRO</h1>', unsafe_allow_html=True)
+st.write("### Real-Time Market Intelligence")
+st.write("Search any make/model to get an instant US market valuation based on millions of records.")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SECTION 2: THE SEARCHABLE FORM ---
+# --- SECTION 2: THE DYNAMIC FORM ---
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.subheader("🏎️ Vehicle Specifications")
+st.subheader("🔍 Vehicle Analysis")
 
-# Full List of 55+ Brands for "Search by itself" feel
+# Expanded US Car Brand List
 all_brands = sorted([
-    "Toyota", "Bmw", "Ford", "Mercedes-benz", "Honda", "Nissan", "Chevrolet", 
-    "Audi", "Hyundai", "Kia", "Jeep", "Dodge", "Lexus", "Volkswagen", "Mazda", 
-    "Gmc", "Infiniti", "Ram", "Subaru", "Chrysler", "Cadillac", "Acura", 
-    "Buick", "Lincoln", "Volvo", "Mitsubishi", "Land rover", "Porsche", 
-    "Jaguar", "Mini", "Gmc", "Pontiac", "Mercury", "Saturn", "Scion", 
-    "Hummer", "Saab", "Suzuki", "Oldsmobile", "Isuzu", "Fiat", "Bentley", 
-    "Maserati", "Aston martin", "Tesla", "Ferrari", "Lamborghini", "Rolls-royce"
+    "Acura", "Alfa Romeo", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Cadillac", 
+    "Chevrolet", "Chrysler", "Dodge", "Ferrari", "Fiat", "Fisker", "Ford", "Genesis", 
+    "GMC", "Honda", "Hummer", "Hyundai", "Infiniti", "Isuzu", "Jaguar", "Jeep", "Kia", 
+    "Lamborghini", "Land Rover", "Lexus", "Lincoln", "Lotus", "Maserati", "Maybach", 
+    "Mazda", "McLaren", "Mercedes-Benz", "Mercury", "MINI", "Mitsubishi", "Nissan", 
+    "Oldsmobile", "Plymouth", "Pontiac", "Porsche", "RAM", "Rolls-Royce", "Saab", 
+    "Saturn", "Scion", "Smart", "Subaru", "Suzuki", "Tesla", "Toyota", "Volkswagen", "Volvo"
 ])
 
 with st.form("main_form"):
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     with c1:
-        make = st.selectbox("Manufacturer", options=all_brands)
-        year = st.slider("Model Year", 2010, 2026, 2022)
+        # SEARCHABLE DROPDOWN WITH PLACEHOLDER
+        make = st.selectbox("Car Brand", options=["Choose the brand"] + all_brands)
+        # MANUAL NUMBER INPUT FOR YEAR
+        year = st.number_input("Model Year", min_value=1990, max_value=2027, value=None, placeholder="Enter Year (e.g. 2022)")
+        # MANUAL NUMBER INPUT FOR MILES
+        mileage = st.number_input("Odometer (Total Miles)", min_value=0, value=None, placeholder="Type actual miles...")
+        
     with c2:
-        model_name = st.text_input("Model Name (e.g., Civic, Mustang)", "Camry")
+        # EMPTY TEXT INPUT FOR MODEL
+        model_name = st.text_input("Car Model", value="", placeholder="Type model (e.g. Mustang, Civic...)")
+        # TRANSMISSION
         trans = st.radio("Transmission", ["Automatic", "Manual"], horizontal=True)
-    with c3:
-        mileage = st.number_input("Odometer (KM)", value=45000)
-        cond = st.select_slider("Condition", options=["Poor", "Fair", "Good", "Excellent", "New"], value="Good")
+        # CONDITION
+        cond = st.select_slider("Vehicle Condition", options=["Poor", "Fair", "Good", "Excellent", "Like New"], value="Good")
 
-    # Map condition text to numbers for the AI
-    cond_map = {"Poor": 1.0, "Fair": 2.0, "Good": 3.0, "Excellent": 4.0, "New": 5.0}
+    cond_map = {"Poor": 1.0, "Fair": 2.0, "Good": 3.0, "Excellent": 4.0, "Like New": 5.0}
     
-    # Placeholders for columns required by the model but not used in UI
-    trim = "Base"
-    body = "Sedan"
-
-    submitted = st.form_submit_button("CALCULATE VALUE")
+    st.write("---")
+    submitted = st.form_submit_button("GET ESTIMATED PRICE")
 
 if submitted:
-    with st.spinner("🧠 Scanning market databases..."):
-        # Create input row
-        input_df = pd.DataFrame([[year, make, model_name, trim, body, trans, cond_map[cond], mileage]], 
-                                columns=["year", "make", "model", "trim", "body", "transmission", "condition", "odometer"])
-        
-        # Encoding (Handles unseen text safely)
-        cat_cols = ["make", "model", "trim", "body", "transmission"]
-        input_df[cat_cols] = encoder.transform(input_df[cat_cols].astype(str).apply(lambda x: x.str.capitalize()))
-        
-        # Scaling & Prediction
-        final_input = scaler.transform(input_df)
-        price = model.predict(final_input)[0]
-        time.sleep(1.2) 
-        
-        st.balloons()
-        st.markdown(f"<h2 style='text-align: center; color: #00d2ff;'>Market Estimate: ${price:,.2f}</h2>", unsafe_allow_html=True)
-        
-        # Add to Session History
-        st.session_state.history.insert(0, {"Vehicle": f"{year} {make} {model_name}", "Price": f"${price:,.2f}"})
+    if make == "Choose the brand" or not model_name or year is None or mileage is None:
+        st.warning("⚠️ Please fill in all fields to get an accurate estimate.")
+    else:
+        with st.spinner("Analyzing current US market data..."):
+            # Model uses lowercase/capitalized logic based on your training
+            input_df = pd.DataFrame([[year, make, model_name, "Base", "Sedan", trans, cond_map[cond], mileage]], 
+                                    columns=["year", "make", "model", "trim", "body", "transmission", "condition", "odometer"])
+            
+            # Match training encoding
+            cat_cols = ["make", "model", "trim", "body", "transmission"]
+            input_df[cat_cols] = encoder.transform(input_df[cat_cols].astype(str).apply(lambda x: x.str.capitalize()))
+            
+            # Predict
+            final_input = scaler.transform(input_df)
+            price = model.predict(final_input)[0]
+            time.sleep(1) 
+            
+            st.balloons()
+            st.markdown(f"<h2 style='text-align: center; color: #00d2ff;'>Market Value: ${price:,.2f}</h2>", unsafe_allow_html=True)
+            
+            # Add to Session History
+            st.session_state.history.insert(0, {"Year": year, "Brand": make, "Model": model_name, "Miles": f"{mileage:,}", "Price": f"${price:,.2f}"})
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SECTION 3: INTERACTIVE HISTORY ---
+# --- SECTION 3: RECENT VALUATIONS ---
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.subheader("📋 Recent Valuations")
+st.subheader("📋 Recent Estimations")
 if st.session_state.history:
-    st.table(pd.DataFrame(st.session_state.history))
+    st.dataframe(pd.DataFrame(st.session_state.history), use_container_width=True)
     if st.button("Clear History"):
         st.session_state.history = []
         st.rerun()
 else:
-    st.info("No valuations found. Run the engine to see history.")
+    st.info("Your estimation history will appear here.")
 st.markdown('</div>', unsafe_allow_html=True)
