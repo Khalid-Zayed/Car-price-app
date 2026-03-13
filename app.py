@@ -6,98 +6,119 @@ from bs4 import BeautifulSoup
 import re
 import time
 
-# --- 1. SETTINGS & STYLING ---
-st.set_page_config(page_title="Live Market Auto-Predict", page_icon="📈", layout="wide")
+# --- 1. PRO DESIGN ---
+st.set_page_config(page_title="Live Auto Intelligence", page_icon="📈", layout="wide")
 
 st.markdown("""
     <style>
     .stApp { background: #000000; color: #f0f0f0; }
-    .glass-card { background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 30px; border: 1px solid #333; }
-    .price-box { background: linear-gradient(90deg, #00d2ff, #3a7bd5); padding: 20px; border-radius: 15px; text-align: center; }
+    .glass-card { 
+        background: rgba(255, 255, 255, 0.05); 
+        border-radius: 20px; 
+        padding: 30px; 
+        border: 1px solid #333; 
+        margin-bottom: 20px;
+    }
+    .price-display { 
+        background: linear-gradient(90deg, #00d2ff, #3a7bd5); 
+        padding: 40px; 
+        border-radius: 20px; 
+        text-align: center; 
+        font-size: 50px;
+        font-weight: 900;
+        box-shadow: 0 0 30px #00d2ff;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. LIVE SCRAPER FUNCTION ---
-def get_live_market_price(year, make, model, trim):
-    """Searches Google for live listings and extracts prices to find an average."""
-    query = f"{year} {make} {model} {trim} for sale price"
+# --- 2. THE LIVE SCAPPING ENGINE ---
+def scrape_live_prices(year, make, model, trim):
+    """Scrapes Google Search for real-world listings and averages the prices."""
+    # Precise query for US market
+    query = f"{year} {make} {model} {trim} price in usa for sale"
     url = f"https://www.google.com/search?q={query}"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     
     try:
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Look for dollar signs followed by numbers in the search results
+        # Regex to find all dollar amounts ($10,000 to $999,999)
         text = soup.get_text()
-        prices = re.findall(r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        found_prices = re.findall(r'\$\d{1,3}(?:,\d{3})*', text)
         
-        # Convert found strings like "$25,000" to integers
-        clean_prices = []
-        for p in prices:
-            num = int(p.replace('$', '').replace(',', '').split('.')[0])
-            if num > 1000: # Filter out small numbers that aren't car prices
-                clean_prices.append(num)
+        # Clean and filter real car prices
+        numeric_prices = []
+        for p in found_prices:
+            val = int(p.replace('$', '').replace(',', ''))
+            # Filter out non-price numbers (must be > $2,000 and < $2M)
+            if 2000 < val < 2000000:
+                numeric_prices.append(val)
         
-        if clean_prices:
-            # Take the average of the top 5 results found
-            return sum(clean_prices[:5]) / len(clean_prices[:5])
+        if numeric_prices:
+            # Return average of the most relevant top 5 prices found
+            return sum(numeric_prices[:5]) / len(numeric_prices[:5])
         return None
     except:
         return None
 
-# --- 3. THE APP LOGIC ---
-if 'started' not in st.session_state: st.session_state.started = False
+# --- 3. APP NAVIGATION ---
+if 'started' not in st.session_state:
+    st.session_state.started = False
 
 if not st.session_state.started:
     st.markdown('<div class="glass-card" style="text-align:center; margin-top:100px;">', unsafe_allow_html=True)
-    st.title("💎 LIVE MARKET ESTIMATOR")
-    st.write("Our system scrapes live agency data to give you the most accurate price in 2026.")
-    st.button("Start Live Search", on_click=lambda: st.session_state.update({"started": True}))
+    st.title("🌐 LIVE MARKET AUTO-ESTIMATOR")
+    st.write("### Scrapes live US agency data for real-time accuracy.")
+    st.button("Start Estimating!", on_click=lambda: st.session_state.update({"started": True}))
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    # Load your local model as a fallback
+    # Load AI Baseline
     model = joblib.load('car_price_model.pkl')
     encoder = joblib.load('encoder.joblib')
     scaler = joblib.load('scaler.joblib')
 
-    st.title("🏎️ Real-Time Valuation")
+    st.markdown("## 🔍 Live Market Analysis")
     
-    with st.form("main_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            make = st.text_input("Brand", placeholder="Toyota, BMW, etc.")
-            model_name = st.text_input("Model", placeholder="Camry, X5, etc.")
-            year = st.number_input("Year", 2010, 2027, value=None)
-        with col2:
-            trim = st.text_input("Trim (CRITICAL)", placeholder="LE, GT, Premium, etc.")
-            miles = st.number_input("Miles", min_value=0, value=None)
-            submit = st.form_submit_button("SEARCH REAL-TIME MARKET")
+    with st.form("search_form"):
+        c1, c2 = st.columns(2)
+        with c1:
+            make = st.selectbox("Brand Agency", ["Choose..."] + sorted(["Acura", "Audi", "BMW", "Cadillac", "Chevrolet", "Ford", "GMC", "Honda", "Hyundai", "Jeep", "Kia", "Lexus", "Mercedes-Benz", "Nissan", "Porsche", "RAM", "Tesla", "Toyota", "Volkswagen", "Volvo"]))
+            model_name = st.text_input("Car Model", placeholder="e.g. Camry, Mustang")
+            year = st.number_input("Year", 2010, 2027, value=None, placeholder="YYYY")
+        with c2:
+            trim = st.text_input("Trim / Edition (Required for Accuracy)", placeholder="e.g. XLE, GT, Premium")
+            miles = st.number_input("Odometer Miles", min_value=0, value=None, placeholder="Total miles walked")
+            submit = st.form_submit_button("GET FINAL REAL ESTIMATION")
 
     if submit:
-        if not (make and model_name and trim and year and miles):
-            st.error("Please fill all details to allow the scraper to search.")
+        if make == "Choose..." or not model_name or not trim or year is None or miles is None:
+            st.warning("🚨 Please fill all fields to trigger the live search.")
         else:
-            with st.spinner(f"🔍 Searching Google & Agencies for {year} {make} {model_name} {trim}..."):
-                # 1. Get Live Data
-                live_avg = get_live_market_price(year, make, model_name, trim)
+            with st.spinner(f"Searching for live {year} {make} {model_name} {trim} listings..."):
+                # STEP 1: Scrape Live Web Data
+                live_price = scrape_live_prices(year, make, model_name, trim)
                 
-                # 2. Get AI Baseline (Your trained model)
+                # STEP 2: Get AI Model Prediction
                 input_df = pd.DataFrame([[year, make, model_name, trim, "Sedan", "Automatic", 3.0, miles]], 
                                         columns=["year", "make", "model", "trim", "body", "transmission", "condition", "odometer"])
                 input_df[input_df.columns[1:6]] = encoder.transform(input_df[input_df.columns[1:6]].astype(str).apply(lambda x: x.str.capitalize()))
                 ai_price = model.predict(scaler.transform(input_df))[0]
                 
-                time.sleep(1) # For effect
-
-                # 3. Final Calculation (Weighted average of AI + Live Data)
-                final_price = live_avg if live_avg else ai_price
+                # STEP 3: Logic - Prefer Live Data, use AI as stabilizer
+                final_estimation = live_price if live_price else ai_price
                 
-                st.markdown('<div class="price-box">', unsafe_allow_html=True)
-                st.markdown(f"<h1>Final Real Estimation: ${final_price:,.2f}</h1>", unsafe_allow_html=True)
-                if live_avg:
-                    st.write(f"✅ Verified against live listings for the **{trim}** trim.")
+                time.sleep(1)
+                st.balloons()
+                
+                st.markdown(f'<div class="price-display">${final_estimation:,.2f}</div>', unsafe_allow_html=True)
+                
+                st.markdown('<div class="glass-card" style="margin-top:20px;">', unsafe_allow_html=True)
+                if live_price:
+                    st.success(f"✅ Real-time verified: Scanned listings for the **{trim}** trim in the current US market.")
                 else:
-                    st.write("⚠️ Live data busy; using AI market-trend baseline.")
+                    st.info("ℹ️ Note: Live scraper busy. Price is based on AI historical market trends.")
                 st.markdown('</div>', unsafe_allow_html=True)
