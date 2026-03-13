@@ -3,98 +3,134 @@ import pandas as pd
 import joblib
 import time
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="AI Car Price Predictor", page_icon="🚗", layout="wide")
+# --- 1. PAGE SETUP & GLOWING CSS ---
+st.set_page_config(page_title="AI Car Valuator Pro", page_icon="💎", layout="wide")
 
-# --- CUSTOM CSS FOR TRANSITIONS & UI ---
 st.markdown("""
     <style>
-    .main { opacity: 0; animation: fadeIn 1.5s forwards; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .stButton>button { width: 100%; border-radius: 20px; transition: 0.3s; }
-    .stButton>button:hover { background-color: #ff4b4b; color: white; transform: scale(1.02); }
+    /* Vibrant Ink Background */
+    .stApp {
+        background: radial-gradient(circle at top right, #001f3f, #000000);
+        color: #e0e0e0;
+    }
+    
+    /* Glowing Glass Containers for Sections */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Interactive Button Styling */
+    .stButton>button {
+        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: bold;
+        transition: all 0.3s ease-in-out;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0 20px #00d2ff;
+        color: #ffffff;
+    }
+    
+    /* Custom Title Text */
+    .ink-title {
+        font-family: 'Inter', sans-serif;
+        background: -webkit-linear-gradient(#00d2ff, #91eaff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        font-size: 50px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOAD MODEL ---
+# --- 2. ASSET LOADING ---
 @st.cache_resource
-def load_model_files():
-    model = joblib.load('car_price_model.pkl')
-    encoder = joblib.load('encoder.joblib')
-    scaler = joblib.load('scaler.joblib')
-    return model, encoder, scaler
+def load_assets():
+    # Note: Ensure these filenames match your GitHub exactly (lowercase, no spaces)
+    m = joblib.load('car_price_model.pkl')
+    e = joblib.load('encoder.joblib')
+    s = joblib.load('scaler.joblib')
+    return m, e, s
 
-model, encoder, scaler = load_model_files()
+model, encoder, scaler = load_assets()
 
-# Initialize history in session state
 if 'history' not in st.session_state:
-    st.session_state.history = pd.DataFrame(columns=["Make", "Model", "Year", "Condition", "Mileage", "Estimated Price"])
+    st.session_state.history = []
 
-# --- SECTION 1: WELCOME ---
-st.title("🚗 2026 AI Car Valuator")
-st.markdown("""
-Welcome to the professional car price estimator. Using **Real-World Market Data**, 
-this AI analyzes vehicle specs to give you a highly accurate selling price instantly.
-""")
-st.divider()
+# --- SECTION 1: WELCOME & VIBE ---
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.markdown('<h1 class="ink-title">💎 AI CAR VALUATOR PRO</h1>', unsafe_allow_html=True)
+st.write("### Precise Market Analysis powered by Neural Regression.")
+st.write("This engine analyzes mileage, condition, and market trends to give you an instant valuation.")
+st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SECTION 2: ESTIMATE ---
-st.header("📍 Vehicle Estimate")
-col1, col2 = st.columns([1, 1], gap="large")
+# --- SECTION 2: THE INTERACTIVE FORM ---
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.subheader("🏎️ Vehicle Specifications")
 
-with col1:
-    with st.form("prediction_form", clear_on_submit=False):
-        st.subheader("Vehicle Details")
-        make = st.text_input("Car Brand", placeholder="e.g. Toyota")
-        model_name = st.text_input("Car Model", placeholder="e.g. Camry")
-        year = st.number_input("Year", min_value=2012, max_value=2026, value=2020)
-        trim = st.text_input("Trim / Version", placeholder="e.g. SE")
-        body = st.selectbox("Body Type", ["Sedan", "SUV", "Hatchback", "Truck", "Coupe", "Van"])
-        
-        st.subheader("Mechanical Specs")
+with st.form("main_form"):
+    row1_col1, row1_col2, row1_col3 = st.columns(3)
+    with row1_col1:
+        make = st.selectbox("Manufacturer", ["Toyota", "Bmw", "Ford", "Mercedes-benz", "Honda", "Nissan", "Chevrolet"])
+        year = st.number_input("Model Year", 2010, 2026, 2022)
+    with row1_col2:
+        model_name = st.text_input("Model Name", "Camry")
         trans = st.radio("Transmission", ["Automatic", "Manual"], horizontal=True)
-        odo = st.number_input("Odometer (Mileage)", min_value=0, step=1000)
-        
-        # User-friendly choices for Condition
-        cond_map = {"As New (5.0)": 5.0, "Excellent (4.0)": 4.0, "Good (3.0)": 3.0, "Fair (2.0)": 2.0, "Poor (1.0)": 1.0}
-        condition_label = st.selectbox("Overall Condition", list(cond_map.keys()))
-        condition_val = cond_map[condition_label]
+    with row1_col3:
+        mileage = st.number_input("Odometer (KM)", value=30000)
+        cond = st.slider("Vehicle Condition", 1.0, 5.0, 4.0)
 
-        submit = st.form_submit_button("Generate AI Estimate")
+    # Simplified values for your model logic
+    trim = "Base"
+    body = "Sedan"
 
-if submit:
-    with st.spinner("Analyzing market trends..."):
-        # We fill 'state', 'color', 'interior' with defaults to keep the model happy
-        input_data = pd.DataFrame([[
-            year, make.capitalize(), model_name.capitalize(), trim.capitalize(), 
-            body.capitalize(), trans.capitalize(), "ca", condition_val, odo, "Black", "Black"
-        ]], columns=["year", "make", "model", "trim", "body", "transmission", "state", "condition", "odometer", "color", "interior"])
+    st.write("")
+    submitted = st.form_submit_button("CALCULATE VALUE")
 
-        # Transform & Predict
-        cat_cols = ["make", "model", "trim", "body", "transmission", "color", "interior", "state"]
-        input_data[cat_cols] = encoder.transform(input_data[cat_cols].astype(str))
-        input_scaled = scaler.transform(input_data)
-        prediction = model.predict(input_scaled)[0]
+if submitted:
+    with st.spinner("🧠 AI is analyzing auction records..."):
+        # Processing
+        input_df = pd.DataFrame([[year, make, model_name, trim, body, trans, cond, mileage]], 
+                                columns=["year", "make", "model", "trim", "body", "transmission", "condition", "odometer"])
         
-        time.sleep(1) # For a smooth transition feel
+        # Transformation
+        cat_cols = ["make", "model", "trim", "body", "transmission"]
+        input_df[cat_cols] = encoder.transform(input_df[cat_cols].astype(str).apply(lambda x: x.str.capitalize()))
+        final_input = scaler.transform(input_df)
         
-    with col2:
+        # Prediction
+        price = model.predict(final_input)[0]
+        time.sleep(1.2) # Adding a dramatic pause
+        
         st.balloons()
-        st.success(f"### Estimated Price: ${prediction:,.2f}")
-        st.metric("Confidence Level", "94.2%")
-        st.info("This price is based on current 2026 market demand and vehicle scarcity.")
+        st.markdown(f"<h2 style='text-align: center; color: #00d2ff;'>Market Estimate: ${price:,.2f}</h2>", unsafe_allow_html=True)
         
         # Add to History
-        new_entry = {
-            "Make": make, "Model": model_name, "Year": year, 
-            "Condition": condition_label, "Mileage": odo, "Estimated Price": f"${prediction:,.2f}"
-        }
-        st.session_state.history = pd.concat([pd.DataFrame([new_entry]), st.session_state.history], ignore_index=True)
+        st.session_state.history.append({"Vehicle": f"{year} {make}", "Price": f"${price:,.2f}"})
 
-# --- SECTION 3: DATA HISTORY ---
-st.divider()
-st.header("📊 Prediction History")
-if not st.session_state.history.empty:
-    st.dataframe(st.session_state.history, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- SECTION 3: RECENT ESTIMATIONS ---
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.subheader("📋 Recent Estimations")
+if st.session_state.history:
+    # Reverse the history to show newest first
+    hist_df = pd.DataFrame(st.session_state.history[::-1])
+    st.dataframe(hist_df, use_container_width=True)
 else:
-    st.write("No predictions generated yet. Fill the form above!")
+    st.info("No estimates yet. Try the form above.")
+st.markdown('</div>', unsafe_allow_html=True)
