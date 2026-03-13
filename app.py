@@ -3,19 +3,19 @@ import google.generativeai as genai
 import os
 
 # --- AUTHENTICATION ---
-# Use the key you generated in Google AI Studio
+# Using your key: AIzaSyBkIQ2bkm7i0nh0LNxQa_YLiZkFBtuHCjY
 api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 
-# --- UI & ANIMATIONS ---
+# --- VIBRANT UI ---
 st.set_page_config(page_title="AutoIntelligence Pro", page_icon="🏎️", layout="wide")
 st.markdown("""
     <style>
     .stApp { background: radial-gradient(circle, #2a0000 0%, #000000 100%); color: white; }
     .main-title { font-size: 70px !important; font-weight: 900; text-align: center; color: #ff0000; text-shadow: 0 0 20px #ff0000; }
     .glass-card { background: rgba(255, 0, 0, 0.05); border-radius: 15px; padding: 30px; border: 1px solid #ff0000; backdrop-filter: blur(10px); }
-    .price-tag { font-size: 60px; font-weight: 900; color: #ff0000; text-align: center; background: white; border-radius: 10px; padding: 10px; margin: 20px 0; }
+    .price-tag { font-size: 65px; font-weight: 900; color: #ff0000; text-align: center; background: white; border-radius: 10px; padding: 10px; margin: 20px 0; }
     .stButton>button { background: linear-gradient(45deg, #ff0000, #660000) !important; color: white !important; font-weight: bold !important; width: 100% !important; height: 50px !important; border: none !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -41,11 +41,11 @@ else:
         st.session_state.page = 'home'
         st.rerun()
 
-    st.markdown('<h1 class="main-title" style="font-size:40px !important;">VALUATION ENGINE</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title" style="font-size:45px !important;">VALUATION ENGINE</h1>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        with st.form("valuation_form"):
+        with st.form("val_form"):
             c1, c2 = st.columns(2)
             with c1:
                 make = st.text_input("BRAND")
@@ -65,15 +65,15 @@ else:
         else:
             with st.spinner("SCANNING MARKET DATA..."):
                 try:
-                    # Updated model name to 'gemini-pro' to fix your 404 error
-                    model_ai = genai.GenerativeModel('gemini-pro')
-                    prompt = f"Appraiser: Current market value for {year} {make} {model_name} {trim} with {miles} miles. Format: PRICE: [number] REASON: [justification]"
+                    # Updated to use 'gemini-1.5-flash-latest' for better compatibility
+                    model_ai = genai.GenerativeModel('gemini-1.5-flash-latest')
+                    prompt = f"Professional appraiser: price for {year} {make} {model_name} {trim} with {miles} miles. Format: PRICE: [number] REASON: [justification]"
                     response = model_ai.generate_content(prompt).text
                     
                     price_val = response.split("REASON:")[0].replace("PRICE:", "").strip()
                     reason_val = response.split("REASON:")[1].strip()
 
                     st.markdown(f'<div class="price-tag">${int("".join(filter(str.isdigit, price_val))):,}</div>', unsafe_allow_html=True)
-                    st.info(reason_val)
+                    st.success(reason_val)
                 except Exception as e:
                     st.error(f"Engine connection failed: {e}")
