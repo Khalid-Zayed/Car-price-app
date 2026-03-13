@@ -2,7 +2,4 @@ streamlit
 google-generativeai
 beautifulsoup4
 requests
-pandas
-joblib
-scikit-learn
 python-dotenv
