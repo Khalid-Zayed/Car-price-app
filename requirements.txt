@@ -3,4 +3,5 @@ pandas
 joblib
 requests
 beautifulsoup4
-scikit-learn
+scikit-learn==1.6.1
+numpy
