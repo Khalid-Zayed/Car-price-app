@@ -9,38 +9,55 @@ if groq_key:
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
 
-# --- STYLING: VIBRANT LIGHT THEME ---
+# --- STYLING: VIBRANT LIGHT THEME & BOLD TYPOGRAPHY ---
 st.markdown("""
     <style>
-    /* Vibrant Light White Background */
+    /* Vibrant Light Background */
     .stApp {
-        background-color: #f8f9fa;
+        background-color: #ffffff;
     }
     
-    .hero-container {
+    /* Clean Header Styling - Removed Black Box */
+    .header-container {
         text-align: center;
-        padding: 60px 0;
-        background: #000;
-        color: white;
-        border-radius: 0 0 40px 40px;
+        padding: 40px 0 20px 0;
+        background: transparent;
     }
     
-    /* Search Terminal Styling: White Form with Lime Text */
+    /* Font for Run&Drive - Modern, Black, Bold */
+    .main-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 5rem;
+        font-weight: 900;
+        color: #000000;
+        margin-bottom: 0;
+        letter-spacing: -2px;
+    }
+
+    .sub-title {
+        font-size: 1.2rem;
+        color: #32cd32;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-top: -10px;
+    }
+    
+    /* Search Terminal Styling */
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 20px !important;
         padding: 40px !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
-        border: 1px solid #eee !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08) !important;
+        border: 1px solid #f0f0f0 !important;
     }
     
     label {
         color: #32cd32 !important; 
         font-weight: 700 !important;
-        font-size: 1.1rem !important;
     }
 
-    /* CARD SYMMETRY FIX: Forced height and flex alignment */
+    /* CARD SYMMETRY FIX */
     .stat-card {
         background: #ffffff;
         padding: 40px 20px;
@@ -53,24 +70,21 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         margin-top: 20px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        border: 1px solid #f8f8f8;
     }
 
-    /* SOLID PRICE VISIBILITY: High-contrast lime green */
     .price-text {
         color: #32cd32 !important;
-        opacity: 1 !important;
-        font-size: 3.8rem !important;
+        font-size: 4rem !important;
         font-weight: 900 !important;
         margin: 0 !important;
-        line-height: 1 !important;
     }
 
     .trend-text {
         color: #000000;
-        font-size: 3.2rem;
+        font-size: 3.5rem;
         font-weight: 800;
-        margin: 0;
     }
 
     .spec-label {
@@ -78,13 +92,12 @@ st.markdown("""
         font-size: 0.9rem;
         font-weight: bold;
         text-transform: uppercase;
-        margin-bottom: 5px;
     }
 
     .spec-value {
-        color: #1a1a1a; /* Darker for readability on light background */
+        color: #1a1a1a;
         font-size: 1.8rem;
-        font-weight: 600;
+        font-weight: 700;
     }
 
     header {visibility: hidden;}
@@ -93,18 +106,18 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 1. HERO SECTION ---
+# --- 1. MINIMALIST HERO SECTION ---
 st.markdown("""
-    <div class="hero-container">
-        <h1 style='font-size: 4.5rem; margin-bottom: 0;'>Run&Drive</h1>
-        <p style='font-size: 1.4rem; color: #32cd32; font-weight: bold;'>AUTOMOTIVE EXCELLENCE</p>
+    <div class="header-container">
+        <h1 class="main-title">Run&Drive</h1>
+        <p class="sub-title">Automotive Excellence</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Main branding image
+# Cadillac Banner
 st.image("https://cdn.dlron.us/static/dealer-27085/2024_Cadillac_Escalade/banner_2024_Cadillac_Escalade.jpg?v=ht3cO0GIsRU8HoPCdrCEsw==", use_column_width=True)
 
-# --- 2. THE TERMINAL (INPUT FORM) ---
+# --- 2. INPUT TERMINAL ---
 st.markdown("<br>", unsafe_allow_html=True)
 col_l, col_mid, col_r = st.columns([1, 2, 1])
 
@@ -126,10 +139,8 @@ if submit:
         with st.spinner("Analyzing Institutional Data..."):
             try:
                 prompt = (
-                    f"Perform an institutional market analysis for a {year} {brand} {model} {trim} with {miles} miles. "
-                    "Be highly accurate with performance specs and current auction pricing. "
-                    "Return exactly this format: PRICE: [value] | TREND: [status] | "
-                    "SPECS: [Engine Type]/[Horsepower]/[0-60 MPH]/[Top Speed]"
+                    f"Institutional market analysis for {year} {brand} {model} {trim} with {miles} miles. "
+                    "Return exactly: PRICE: [value] | TREND: [status] | SPECS: [Engine]/[HP]/[0-60]/[Top Speed]"
                 )
                 
                 res = client.chat.completions.create(
@@ -141,41 +152,37 @@ if submit:
                 trend = res.split("TREND:")[1].split("|")[0].strip()
                 specs = res.split("SPECS:")[1].strip().split("/")
 
-                # Display Results Header (Dark text for light background)
-                st.markdown(f"<h1 style='text-align:center; color:#1a1a1a; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<h1 style='text-align:center; color:#000; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
                 
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(f"""
                         <div class="stat-card">
-                            <p style="color:#888; font-weight:bold; margin-bottom:10px;">ESTIMATED MARKET PRICE</p>
+                            <p style="color:#888; font-weight:bold;">ESTIMATED MARKET PRICE</p>
                             <p class="price-text">{price}</p>
                         </div>
                     """, unsafe_allow_html=True)
                 with c2:
                     st.markdown(f"""
                         <div class="stat-card">
-                            <p style="color:#888; font-weight:bold; margin-bottom:10px;">SALES TRENDS</p>
+                            <p style="color:#888; font-weight:bold;">SALES TRENDS</p>
                             <p class="trend-text">{trend}</p>
-                            <p style="color:#32cd32; font-weight:bold; margin-top:10px;">Market Status: Active</p>
+                            <p style="color:#32cd32; font-weight:bold;">Market Status: Active</p>
                         </div>
                     """, unsafe_allow_html=True)
 
-                # Technical Specifications Section
-                st.markdown("<br><h2 style='color:#1a1a1a; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
+                st.markdown("<br><h2 style='color:#000; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
                 s1, s2, s3, s4 = st.columns(4)
-                
                 labels = ["Engine", "Power", "0-60 MPH", "Top Speed"]
                 for col, label, val in zip([s1, s2, s3, s4], labels, specs):
                     col.markdown(f"""
-                        <div style="margin-top:20px; background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+                        <div style="margin-top:20px; background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                             <p class="spec-label">{label}</p>
                             <p class="spec-value">{val}</p>
                         </div>
                     """, unsafe_allow_html=True)
 
             except Exception as e:
-                st.error("Engine failure. Please ensure your API key is correct and try again.")
+                st.error("Engine failure. Please check your API key.")
 
-# Footer
-st.markdown("<br><br><p style='text-align:center; color:#888;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align:center; color:#ccc;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
