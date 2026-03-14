@@ -73,15 +73,15 @@ if st.session_state.page == 'home':
     col1, col2, col3 = st.columns([1,3,1])
     with col2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        # Reliable Hero Image (Porsche 911)
-        st.image("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200")
+        # Professional Hero Image
+        st.image("https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&q=80&w=1200")
         
         if st.button("🏁 Access Valuation Engine"):
             st.session_state.page = 'engine'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PAGE: ENGINE ---
+# --- PAGE: ENGINE TERMINAL ---
 else:
     if st.button("⬅️ Disconnect Session"):
         st.session_state.page = 'home'
@@ -95,27 +95,27 @@ else:
             c1, c2 = st.columns(2)
             with c1:
                 make = st.text_input("Brand", value="", placeholder="e.g. Porsche")
-                model_name = st.text_input("Model", value="", placeholder="e.g. 911 Turbo")
-                year = st.number_input("Year", min_value=1960, max_value=2027, value=2024)
+                model_name = st.text_input("Model Line", value="", placeholder="e.g. 911 GT3")
+                year = st.number_input("Production year", min_value=1950, max_value=2027, value=2024)
             with c2:
-                trim = st.text_input("Trim / Spec", value="", placeholder="e.g. S, Heritage Edition")
-                miles = st.number_input("Mileage", value=0)
-                submit = st.form_submit_button("🔥 Analyze Market Value")
+                trim = st.text_input("Trim / Specification", value="", placeholder="e.g. Weissach Pack")
+                miles = st.number_input("Odometer reading (miles)", value=0)
+                submit = st.form_submit_button("🔥 Execute Market Analysis")
         st.markdown('</div>', unsafe_allow_html=True)
 
     if submit:
         if not (make and model_name):
-            st.warning("Please enter car details.")
+            st.warning("Please specify Brand and Model.")
         else:
-            with st.spinner("Analyzing market data..."):
+            with st.spinner("Analyzing market stability..."):
                 try:
-                    # PROMPT: Explicit instructions for brief and mileage scaling
+                    # UPDATED PROMPT: Added logic to ignore micro-changes in mileage
                     prompt = (
-                        f"Provide a market valuation for a {year} {make} {model_name} {trim} with {miles} miles. "
-                        "FORMAT YOUR RESPONSE EXACTLY LIKE THIS:\n"
-                        "PRICE: [Price in USD]\n"
-                        "BRIEF: [A 3-sentence professional summary of this specific car's rarity, "
-                        "how the mileage of {miles} specifically affected this price, and its resale outlook.]"
+                        f"Professional US Auto Market Expert: Provide a valuation for a {year} {make} {model_name} {trim} with {miles} miles. "
+                        "RULES:\n"
+                        f"1. MILEAGE LOGIC: Do NOT change the price for minor mileage differences (under 50 miles). A 4-mile difference should almost never change the price. Focus on major wear tiers.\n"
+                        "2. FORMAT: Reply exactly with 'PRICE: [Amount]' then 'BRIEF: [Summary]'.\n"
+                        "3. THE BRIEF: Provide a 3-sentence professional brief. Include current market demand, how the odometer affects this specific model's value, and a 12-month value forecast."
                     )
                     
                     chat_completion = client.chat.completions.create(
@@ -127,11 +127,11 @@ else:
                     if "PRICE:" in response:
                         parts = response.split("BRIEF:")
                         price = parts[0].replace("PRICE:", "").strip()
-                        brief = parts[1].strip() if len(parts) > 1 else "Analysis complete."
+                        brief = parts[1].strip() if len(parts) > 1 else "No brief available."
 
                         st.markdown(f'<div class="result-tag">{price}</div>', unsafe_allow_html=True)
                         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                        st.subheader("Professional Brief")
+                        st.subheader("🏎️ Market Executive Brief")
                         st.write(brief)
                         st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
