@@ -9,46 +9,48 @@ if groq_key:
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
 
-# --- STYLING: VIBRANT LIGHT THEME & BOLD TYPOGRAPHY ---
+# --- STYLING: HIGH-READABILITY LIGHT THEME ---
 st.markdown("""
     <style>
-    /* Vibrant Light Background */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+
     .stApp {
         background-color: #ffffff;
     }
     
-    /* Clean Header Styling - Removed Black Box */
     .header-container {
         text-align: center;
-        padding: 40px 0 20px 0;
+        padding: 60px 0 30px 0;
         background: transparent;
     }
     
-    /* Font for Run&Drive - Modern, Black, Bold */
+    /* ENHANCED TITLE: Bigger, Bolder, High-Contrast */
     .main-title {
-        font-family: 'Inter', sans-serif;
-        font-size: 5rem;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 6.5rem; /* Increased size */
         font-weight: 900;
-        color: #000000;
+        color: #000000 !important;
         margin-bottom: 0;
-        letter-spacing: -2px;
+        letter-spacing: -3px;
+        line-height: 1;
+        /* Subtle shadow to prevent 'ghosting' on bright screens */
+        text-shadow: 2px 2px 0px rgba(0,0,0,0.05); 
     }
 
     .sub-title {
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         color: #32cd32;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-top: -10px;
+        letter-spacing: 6px;
+        margin-top: 10px;
     }
     
-    /* Search Terminal Styling */
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 20px !important;
         padding: 40px !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.08) !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1) !important;
         border: 1px solid #f0f0f0 !important;
     }
     
@@ -57,7 +59,6 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* CARD SYMMETRY FIX */
     .stat-card {
         background: #ffffff;
         padding: 40px 20px;
@@ -70,15 +71,14 @@ st.markdown("""
         justify-content: center;
         align-items: center;
         margin-top: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         border: 1px solid #f8f8f8;
     }
 
     .price-text {
         color: #32cd32 !important;
-        font-size: 4rem !important;
+        font-size: 4.2rem !important;
         font-weight: 900 !important;
-        margin: 0 !important;
     }
 
     .trend-text {
@@ -91,7 +91,6 @@ st.markdown("""
         color: #32cd32;
         font-size: 0.9rem;
         font-weight: bold;
-        text-transform: uppercase;
     }
 
     .spec-value {
@@ -106,7 +105,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 1. MINIMALIST HERO SECTION ---
+# --- 1. ENHANCED HERO SECTION ---
 st.markdown("""
     <div class="header-container">
         <h1 class="main-title">Run&Drive</h1>
@@ -183,6 +182,6 @@ if submit:
                     """, unsafe_allow_html=True)
 
             except Exception as e:
-                st.error("Engine failure. Please check your API key.")
+                st.error("Engine failure.")
 
-st.markdown("<br><br><p style='text-align:center; color:#ccc;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align:center; color:#888;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
