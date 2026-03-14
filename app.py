@@ -7,154 +7,139 @@ groq_key = st.secrets.get("GROQ_API_KEY")
 if groq_key:
     client = Groq(api_key=groq_key)
 
-# --- ULTRA-LUXURY CUSTOM CSS ---
-st.set_page_config(page_title="AutoIntel Elite", page_icon="⬛", layout="wide")
+# --- ULTRA-VIBRANT CYBER-SHARD UI ---
+st.set_page_config(page_title="AutoIntel Cyber", page_icon="⚡", layout="wide")
 
 st.markdown("""
     <style>
-    /* Layered Background: Carbon Fiber Texture + Shards */
+    /* Layered Background: Dark Grid + Multi-Color Neon Shards */
     .stApp {
-        background-color: #050505;
+        background-color: #000000;
         background-image: 
-            radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.05) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(255, 0, 0, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 10% 20%, rgba(0, 255, 0, 0.1) 0%, transparent 30%),
+            radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 30%),
+            radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.05) 0%, transparent 40%),
             url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
         color: #ffffff;
     }
 
-    /* Complex Neon Title */
-    @keyframes neonPulse {
-        from { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000; }
-        to { text-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 5px #ffffff; }
+    /* Animated Cyber Title */
+    @keyframes cyberGlow {
+        0% { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ffff; }
+        50% { text-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000; }
+        100% { text-shadow: 0 0 10px #00ff00, 0 0 20px #00ffff; }
     }
-    .hero-title {
+    .main-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: 85px !important;
+        font-size: 80px !important;
         font-weight: 900;
         text-align: center;
-        background: linear-gradient(to bottom, #ffffff 30%, #ff0000 100%);
+        background: linear-gradient(90deg, #00ff00, #00ffff, #ff0000);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: neonPulse 2s infinite alternate;
-        letter-spacing: -5px;
-        margin-bottom: 0px;
+        animation: cyberGlow 4s infinite;
+        letter-spacing: -4px;
     }
 
-    /* The "Complex" Card: Glassmorphism + Ruby Shards */
-    .luxury-card {
-        background: rgba(15, 15, 15, 0.85);
-        border: 2px solid rgba(255, 0, 0, 0.4);
-        border-radius: 25px;
-        padding: 40px;
-        backdrop-filter: blur(25px);
-        box-shadow: 0 0 50px rgba(255, 0, 0, 0.15), inset 0 0 20px rgba(255, 0, 0, 0.05);
+    /* Complex Card: Glassmorphism + Tri-Neon Borders */
+    .cyber-card {
+        background: rgba(10, 10, 10, 0.9);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 35px;
+        backdrop-filter: blur(15px);
+        box-shadow: 
+            -10px -10px 30px rgba(0, 255, 0, 0.05), 
+            10px 10px 30px rgba(0, 255, 255, 0.05),
+            inset 0 0 20px rgba(255, 0, 0, 0.1);
         position: relative;
-        overflow: hidden;
-    }
-    
-    /* Decorative Shard Elements */
-    .luxury-card::before {
-        content: ""; position: absolute; top: -50px; right: -50px; width: 100px; height: 100px;
-        background: #ff0000; filter: blur(60px); opacity: 0.3;
     }
 
-    /* Interactive Stealth Buttons */
+    /* Buttons: Multi-Neon Gradient */
     .stButton>button {
-        background: linear-gradient(135deg, #1a1a1a 0%, #330000 100%) !important;
-        border: 1px solid #ff0000 !important;
-        color: #ff0000 !important;
+        background: linear-gradient(45deg, #00ff00, #00ffff) !important;
+        color: #000 !important;
         font-weight: 900 !important;
-        letter-spacing: 2px;
-        text-transform: uppercase;
+        border: none !important;
+        height: 60px !important;
         border-radius: 5px !important;
-        height: 65px !important;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        transition: 0.3s;
     }
     .stButton>button:hover {
         background: #ff0000 !important;
         color: white !important;
-        box-shadow: 0 0 40px #ff0000;
-        transform: scale(1.03);
+        box-shadow: 0 0 30px #ff0000;
+        transform: translateY(-2px);
     }
 
-    /* Price Display: Gold-Standard Polish */
-    .price-display {
-        font-size: 80px;
+    /* Valuation Output */
+    .valuation-box {
+        font-size: 60px;
         font-weight: 900;
-        color: #000000;
-        background: linear-gradient(90deg, #ff0000, #ff6666);
-        padding: 20px;
-        border-radius: 10px;
         text-align: center;
-        box-shadow: 0 15px 35px rgba(255, 0, 0, 0.4);
-        margin: 30px 0;
+        padding: 20px;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #000000;
+        border-left: 10px solid #00ff00;
+        border-right: 10px solid #ff0000;
+        margin: 20px 0;
     }
-
-    /* Cyber Ticker */
-    @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-    .ticker-bar {
-        background: rgba(255, 0, 0, 0.1);
-        border-top: 1px solid #ff0000;
-        position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px;
-        overflow: hidden; white-space: nowrap; font-family: monospace;
-    }
-    .ticker-content { display: inline-block; animation: scroll 30s linear infinite; color: #ff4d4d; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- NAVIGATION LOGIC ---
 if 'page' not in st.session_state: st.session_state.page = 'home'
 
-# --- PAGE: HOME (LUXURY ENTRANCE) ---
+# --- PAGE: HOME (BUGATTI RE-ENTRY) ---
 if st.session_state.page == 'home':
-    st.markdown('<div style="height:40px;"></div>', unsafe_allow_html=True)
-    st.markdown('<h1 class="hero-title">AUTO INTELLIGENCE</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align:center; color:#ff4d4d; font-weight:bold; letter-spacing:5px;">ELITE MARKET QUANTIFICATION</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">AUTO INTELLIGENCE</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align:center; color:#00ffff; font-family:monospace;">SYST_LOG: NEURAL_VALUATION_ACTIVE</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1,4,1])
     with col2:
-        st.markdown('<div class="luxury-card">', unsafe_allow_html=True)
-        # 2026 Black Cadillac Escalade-V (Stealth Grill)
-        st.image("https://images.unsplash.com/photo-1626012480088-34823ca86e0f?q=80&w=2070&auto=format&fit=crop", 
-                 caption="2026 CADILLAC ESCALADE-V STEALTH")
-        if st.button("🏁 INITIALIZE NEURAL ENGINE"):
+        st.markdown('<div class="cyber-card">', unsafe_allow_html=True)
+        # Re-inserted Bugatti Image (Verified reliable URL)
+        st.image("https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=2000", caption="AUTO_INTEL_SYSTEM_ENTRY")
+        if st.button("🏁 EXECUTE SYSTEM INITIALIZATION"):
             st.session_state.page = 'engine'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PAGE: VALUATION ENGINE ---
+# --- PAGE: ENGINE TERMINAL ---
 else:
-    if st.button("⬅️ TERMINATE SESSION"):
+    if st.button("⬅️ DISCONNECT_SESSION"):
         st.session_state.page = 'home'
         st.rerun()
 
-    st.markdown('<h1 class="hero-title" style="font-size:45px !important;">ENGINE TERMINAL</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title" style="font-size:45px !important;">VALUATION ENGINE</h1>', unsafe_allow_html=True)
     
     with st.container():
-        st.markdown('<div class="luxury-card">', unsafe_allow_html=True)
-        with st.form("elite_form"):
+        st.markdown('<div class="cyber-card">', unsafe_allow_html=True)
+        with st.form("valuation_form"):
             c1, c2 = st.columns(2)
             with c1:
-                make = st.text_input("MANUFACTURER")
-                model_name = st.text_input("MODEL LINE")
+                make = st.text_input("BRAND (e.g., Ferrari, Toyota)", value="")
+                model_name = st.text_input("MODEL (e.g., Roma, Supra)", value="")
                 year = st.number_input("PRODUCTION YEAR", 1920, 2027, 2024)
             with c2:
-                trim = st.text_input("TRIM / SPECIFICATION")
-                miles = st.number_input("ODOMETER (MILES)", value=0)
-                submit = st.form_submit_button("🔥 EXECUTE VALUATION")
+                trim = st.text_input("SPEC/TRIM (e.g., V8, TRD)", value="")
+                miles = st.number_input("TOTAL MILES", value=0)
+                submit = st.form_submit_button("🔥 INITIATE AI MARKET SCAN")
         st.markdown('</div>', unsafe_allow_html=True)
 
     if submit:
         if not (make and model_name):
-            st.warning("⚠️ CRITICAL ERROR: Incomplete vehicle data detected.")
+            st.warning("⚠️ DATA_ENTRY_NULL: Please provide car identification.")
         else:
-            with st.spinner("Neural networks calculating market delta..."):
+            with st.spinner("AI ANALYZING MARKET EXISTENCE..."):
                 try:
                     prompt = (
-                        f"Expert Appraisal Engine: Check if {year} {make} {model_name} {trim} exists. "
-                        "1. If FAKE/IMPOSSIBLE: Reply 'STATUS: INVALID MODEL. This vehicle does not exist in our reality.' "
-                        "2. If YEAR MISMATCH (e.g. 2025 for a 2021 car): Reply 'STATUS: YEAR DISCREPANCY. Production for this model ceased in [Year]. Valuation for the final production year is: PRICE: [Price] REASON: [Why].' "
-                        "3. If REAL: Reply 'PRICE: $[number] REASON: [justification]'. Use AMERICAN MARKET prices."
+                        f"Car expert analysis for: {year} {make} {model_name} {trim} with {miles} miles. "
+                        "RULES: "
+                        "1. If FAKE/IMPOSSIBLE: Reply 'STATUS: INVALID_VEHICLE. This model is not a production vehicle.' "
+                        "2. If YEAR MISMATCH (e.g. 2025 for a 2021 car): Reply 'STATUS: OUT_OF_SYNC. Latest model was [Year]. Valuation for that model is: PRICE: [Price] REASON: [Why].' "
+                        "3. If REAL: Reply 'PRICE: $[number] REASON: [justification]'. USE AMERICAN PRICES."
                     )
                     
                     chat_completion = client.chat.completions.create(
@@ -163,23 +148,16 @@ else:
                     )
                     response = chat_completion.choices[0].message.content
 
-                    if "INVALID" in response or "DISCREPANCY" in response:
+                    if "INVALID_VEHICLE" in response or "OUT_OF_SYNC" in response:
                         st.error(response)
                     elif "PRICE:" in response:
                         parts = response.split("REASON:")
                         price = parts[0].replace("PRICE:", "").strip()
                         reason = parts[1].strip() if len(parts) > 1 else ""
 
-                        st.markdown(f'<div class="price-display">{price}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div class="luxury-card"><b>TECHNICAL JUSTIFICATION:</b><br>{reason}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="valuation-box">{price}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="cyber-card"><b>DATA SUMMARY:</b><br>{reason}</div>', unsafe_allow_html=True)
                 except Exception as e:
-                    st.error(f"Neural connection failure: {e}")
+                    st.error(f"Neural connection error: {e}")
 
-# --- CYBER TICKER ---
-st.markdown("""
-    <div class="ticker-bar">
-        <div class="ticker-content">
-            // LIVE_MARKET_UPDATE: Exotic resale values up 4.2% // SYSTEM_STATUS: Llama-3.3 Active // TRENDING: 2026 Escalade-V Stealth demand increasing // DATA_SYNC: Complete //
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; padding:30px; color:#333; font-family:monospace;">>> [SYSTEM_V.3.1_GREEN_CYAN_RED_ENABLED] <<</p>', unsafe_allow_html=True)
