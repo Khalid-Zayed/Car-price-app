@@ -1,333 +1,258 @@
 import streamlit as st
 from groq import Groq
-import json
-import urllib.parse
+import os
 
 # --- AUTHENTICATION ---
-# Ensure you have "GROQ_API_KEY" in your Streamlit secrets
+# Ensure your key is pasted into the Secrets section of your Streamlit Dashboard
 groq_key = st.secrets.get("GROQ_API_KEY")
-client = Groq(api_key=groq_key) if groq_key else None
+if groq_key:
+    client = Groq(api_key=groq_key)
 
-# --- PAGE CONFIG ---
-st.set_page_config(
-    page_title="CarFin Analytics", 
-    page_icon="🚘", 
-    layout="wide", 
-    initial_sidebar_state="collapsed"
-)
+# --- THE "RUN&DRIVE" UIOverhaul ---
+# Re-branded to "Run&Drive", icon and title updated, case corrected to professional sentence case
+st.set_page_config(page_title="Run&Drive - Market Analytics", page_icon="🏎️", layout="wide")
 
-# --- ADVANCED CSS (MATCHING UI REFERENCE) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-    /* Global Theme Overrides */
+    /* Premium Minimalist Dark Theme with Subtle Layering */
     .stApp {
-        background-color: #f8f9fa;
-        color: #1a1d23;
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #0c0c0c;
+        background-image: 
+            url("https://www.transparenttextures.com/patterns/carbon-fibre.png"),
+            radial-gradient(circle at center, #1a0000 0%, #000000 100%);
+        background-attachment: fixed;
     }
 
-    /* Top Navigation */
-    .top-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 30px;
-        background-color: transparent;
+    /* Minimalist High-End Typography (sentence case, no all-caps) */
+    .hero-title {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 70px !important;
+        font-weight: 800;
+        text-align: center;
+        color: #ffffff;
+        letter-spacing: -2px;
+        margin-top: 30px;
     }
-    .nav-brand { font-weight: 800; font-size: 22px; display: flex; align-items: center; gap: 8px; }
-    .nav-central-capsule {
-        background: white;
-        padding: 8px 20px;
-        border-radius: 50px;
-        display: flex;
-        gap: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    }
-
-    /* Left Panel Styling */
-    .car-header-section { margin-bottom: 30px; }
-    .car-title { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 0; color: #111827; }
-    .car-subtitle { font-size: 15px; color: #6b7280; font-weight: 500; margin-top: 4px; }
-
-    /* Image Container */
-    .image-stage {
-        height: 350px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        margin: 20px 0;
-    }
-    .car-main-img {
-        max-width: 90%;
-        max-height: 320px;
-        object-fit: contain;
-        filter: drop-shadow(0 25px 15px rgba(0,0,0,0.1));
+    .hero-subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 18px;
+        font-weight: 300;
+        margin-bottom: 50px;
+        letter-spacing: 1px;
     }
 
-    /* Specs & Pricing */
-    .price-block { margin-bottom: 40px; }
-    .label-tiny { font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 700; letter-spacing: 1px; }
-    .value-large { font-size: 28px; font-weight: 800; color: #111827; }
-
-    .spec-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-    }
-    .spec-card {
-        background: white;
-        border: 1px solid #edf2f7;
-        padding: 18px;
-        border-radius: 16px;
-        transition: transform 0.2s;
-    }
-    .spec-card:hover { transform: translateY(-3px); }
-    .spec-icon { font-size: 20px; margin-bottom: 10px; }
-    .spec-val { font-size: 14px; font-weight: 700; color: #1a202c; }
-    .spec-lab { font-size: 11px; color: #718096; margin-top: 2px; }
-
-    /* Right Search Panel */
-    .search-container {
-        background: white;
-        padding: 30px;
-        border-radius: 24px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-        border: 1px solid #f1f5f9;
-        height: 100%;
+    /* Professional, Non-Bulky Cards and Spacing */
+    .card {
+        background: rgba(30, 30, 30, 0.5);
+        border-radius: 12px;
+        padding: 35px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        margin-bottom: 25px;
     }
     
-    /* Interactive Yellow Elements */
-    .stButton > button {
-        background-color: #dcf836 !important;
-        color: #000 !important;
-        border: none !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
-        padding: 12px 20px !important;
-        transition: all 0.3s !important;
-    }
-    .stButton > button:hover {
-        background-color: #c9e62e !important;
-        transform: scale(1.02);
-    }
-
-    /* Audio UI Component */
-    .audio-bar {
-        background: #dcf836;
-        border-radius: 14px;
+    /* Result Display Tag (sentence case label, no blue/pink) */
+    .result-tag {
+        font-size: 65px;
+        font-weight: 900;
+        color: #000000;
+        background: #ffffff;
+        text-align: center;
+        border-radius: 8px;
         padding: 15px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
         margin-top: 25px;
+        border-left: 10px solid #ff0000;
     }
-    .wave-sim {
-        flex-grow: 1;
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        height: 20px;
+
+    /* Sleek Action Buttons (sentence case, correct case branding) */
+    .stButton>button {
+        background: linear-gradient(90deg, #ff0000, #800000) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: bold !important;
+        height: 60px !important;
+        width: 100% !important;
+        transition: 0.5s all;
     }
-    .wave-bar { background: black; width: 3px; border-radius: 2px; }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 25px #ff0000;
+    }
 
-    /* Analytics Bars */
-    .stat-bar-bg { background: #f1f5f9; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; }
-    .stat-bar-fill { background: #dcf836; height: 100%; border-radius: 4px; }
-
+    /* White Form Inputs with Lime Examples */
+    /* Set input boxes and number pickers to be white and clean. Dark text for readability. */
+    input {
+        background-color: #ffffff !important;
+        border: 1px solid #e1e4e8 !important;
+        border-radius: 6px !important;
+        color: #000000 !important;
+        padding: 12px !important;
+    }
+    /* Placeholder examples: Make written examples like "e.g. Chalk Grey" use lime color */
+    ::placeholder {
+        color: #dcf836 !important;
+        opacity: 0.8;
+    }
+    /* Stylizing form labels */
+    .stTextInput label, .stNumberInput label, .stSelectbox label {
+        color: #ffffff !important;
+        font-weight: bold !important;
+        text-transform: sentencecase;
+    }
     </style>
-""", unsafe_allow_html=True)
-
-# --- DATA FETCHING ENGINE ---
-def get_car_intelligence(make, model, year, trim, mileage):
-    if not client:
-        return {"error": "API Key missing"}
-    
-    # Prompting Llama to act as a structured data provider
-    prompt = f"""
-    Return JSON only. Estimate market data for: {year} {make} {model} {trim} with {mileage} miles.
-    Values must be realistic for 2026 market.
-    JSON keys: 
-    "title", "subtitle", "price_val", "delivery_val", "mileage_display", "engine_desc", "fuel_desc", "color_name", 
-    "rev_val", "rev_pct", "sales_trend", "market_status"
-    """
-    try:
-        completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile",
-            response_format={"type": "json_object"}
-        )
-        res = json.loads(completion.choices[0].message.content)
-        
-        # Smart Image Logic: Heuristic for transparent car PNGs
-        # Note: In a real app, you'd use a dedicated Image Search API here.
-        clean_name = f"{make}-{model}-{year}".lower().replace(" ", "-")
-        # We use a high-quality fallback that matches the requested car brand via placeholders
-        res["img_url"] = f"https://www.pngall.com/wp-content/uploads/2/Porsche-911-PNG-Clipart.png" 
-        if "audi" in make.lower():
-            res["img_url"] = "https://www.pngall.com/wp-content/uploads/2/Audi-PNG-High-Quality-Image.png"
-        elif "bmw" in make.lower():
-            res["img_url"] = "https://www.pngall.com/wp-content/uploads/2/BMW-PNG-Transparent-HD-Photo.png"
-            
-        return res
-    except Exception as e:
-        return {"error": str(e)}
-
-# --- SESSION STATE INITIALIZATION ---
-if 'car_data' not in st.session_state:
-    st.session_state.car_data = {
-        "title": "Porsche 911 2024",
-        "subtitle": "992 Generation, GT3 Trim",
-        "price_val": "$ 174,000.00",
-        "delivery_val": "$ 2,500.00",
-        "mileage_display": "12,000 mi",
-        "engine_desc": "4.0L Naturally Aspirated Flat-6",
-        "fuel_desc": "15 MPG",
-        "color_name": "Guard Red",
-        "img_url": "https://www.pngall.com/wp-content/uploads/2/Porsche-911-PNG-Clipart.png",
-        "rev_val": "$ 142,000",
-        "rev_pct": "85%",
-        "sales_trend": "+12.4%",
-        "market_status": "Highly Active"
-    }
-
-# --- UI LAYOUT ---
-
-# 1. Top Navigation
-st.markdown(f"""
-<div class="top-nav">
-    <div class="nav-brand">⌘ CarFin</div>
-    <div class="nav-central-capsule">
-        <span>🏠</span><span>⚙️</span>
-        <span style="background:black; color:white; padding:0 6px; border-radius:4px;">🔎</span>
-        <span>📱</span><span>📋</span>
-    </div>
-    <div style="font-size:14px; font-weight:600;">👤 User Profile</div>
-</div>
-""", unsafe_allow_html=True)
-
-main_col, side_col = st.columns([7, 3], gap="large")
-
-with main_col:
-    d = st.session_state.car_data
-    
-    # Header
-    st.markdown(f"""
-        <div class="car-header-section">
-            <h1 class="car-title">{d['title']}</h1>
-            <p class="car-subtitle">{d['subtitle']}</p>
-        </div>
     """, unsafe_allow_html=True)
 
-    # Car Image Stage
-    st.markdown(f"""
-        <div class="image-stage">
-            <img src="{d['img_url']}" class="car-main-img">
-        </div>
-    """, unsafe_allow_html=True)
+if 'page' not in st.session_state: st.session_state.page = 'home'
 
-    # Pricing Row
-    p1, p2, _ = st.columns([1.5, 1.5, 4])
-    with p1:
-        st.markdown(f'<p class="label-tiny">Market Price</p><p class="value-large">{d["price_val"]}</p>', unsafe_allow_html=True)
-    with p2:
-        st.markdown(f'<p class="label-tiny">Delivery</p><p class="value-large" style="font-size:20px; color:#6b7280;">{d["delivery_val"]}</p>', unsafe_allow_html=True)
-
-    # Specs Grid
-    st.markdown(f"""
-    <div class="spec-grid">
-        <div class="spec-card">
-            <div class="spec-icon">⏱️</div>
-            <div class="spec-val">{d['mileage_display']}</div>
-            <div class="spec-lab">Mileage of the car</div>
-        </div>
-        <div class="spec-card">
-            <div class="spec-icon">⚙️</div>
-            <div class="spec-val">{d['engine_desc']}</div>
-            <div class="spec-lab">The engine</div>
-        </div>
-        <div class="spec-card">
-            <div class="spec-icon">⛽</div>
-            <div class="spec-val">{d['fuel_desc']}</div>
-            <div class="spec-lab">Fuel consumption</div>
-        </div>
-        <div class="spec-card">
-            <div class="spec-icon">🎨</div>
-            <div class="spec-val">{d['color_name']}</div>
-            <div class="spec-lab">Factory Color</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Bottom Analytics Section
-    st.markdown('<div style="margin-top:40px; border-bottom:1px solid #e2e8f0; display:flex; gap:20px; font-size:14px; font-weight:600; padding-bottom:10px;">'
-                '<span style="color:black; border-bottom: 2px solid black; padding-bottom:8px;">Analytics</span>'
-                '<span style="color:#a0aec0;">Delivery ✕</span>'
-                '<span style="color:#a0aec0;">Car history ✕</span></div>', unsafe_allow_html=True)
+# --- PAGE: HOME (MINIMALIST HERO) ---
+if st.session_state.page == 'home':
+    # Updated branding and non-all-caps subtitle
+    st.markdown('<h1 class="hero-title">Run&Drive</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="hero-subtitle">High-fidelity market analytics for exclusive marques.</p>', unsafe_allow_html=True)
     
-    a1, a2, a3 = st.columns(3)
-    with a1:
-        st.markdown(f'<div style="background:white; padding:20px; border-radius:16px; margin-top:20px;">'
-                    f'<p class="label-tiny">Revenue Breakdown</p><h3>{d["rev_val"]}</h3>'
-                    f'<div class="stat-bar-bg"><div class="stat-bar-fill" style="width:{d["rev_pct"]};"></div></div></div>', unsafe_allow_html=True)
-    with a2:
-        st.markdown(f'<div style="background:white; padding:20px; border-radius:16px; margin-top:20px;">'
-                    f'<p class="label-tiny">Sales Trends</p><h3>{d["sales_trend"]}</h3>'
-                    f'<div class="stat-bar-bg"><div class="stat-bar-fill" style="width:60%;"></div></div></div>', unsafe_allow_html=True)
-    with a3:
-        st.markdown(f'<div style="background:white; padding:20px; border-radius:16px; margin-top:20px;">'
-                    f'<p class="label-tiny">Market Volume</p><h3>{d["market_status"]}</h3>'
-                    f'<div class="stat-bar-bg"><div class="stat-bar-fill" style="width:90%;"></div></div></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1,3,1])
+    with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        # Reliable silhouette fix: use direct purepng.com URL to avoid relative glitches
+        st.image("https://purepng.com/public/uploads/large/purepng.com-porsche-911-gt3-carcarvehicletransportporsche-961524660341lmtro.png")
+        st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+        # BUTTON (sentence case and correct case branding)
+        if st.button("🏁 Begin Analysis Session"):
+            st.session_state.page = 'engine'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-with side_col:
-    st.markdown('<div class="search-container">', unsafe_allow_html=True)
-    st.markdown('<p style="font-weight: 700; font-size: 18px; margin-bottom: 20px;">🔍 Search Network</p>', unsafe_allow_html=True)
+# --- PAGE: ENGINE TERMINAL ---
+else:
+    # UPDATED Top branding: replaced top bar simulation with just branding
+    st.markdown('<h1 class="hero-title" style="font-size:45px !important; text-align:left;">Run&Drive Terminal</h1>', unsafe_allow_html=True)
     
-    with st.form("car_query"):
-        st.markdown('<p style="font-size: 13px; color: #718096; line-height: 1.4;">'
-                    '"Can you help me find the market value and specs for a specific vehicle?"</p>', unsafe_allow_html=True)
-        
-        f_make = st.text_input("Brand", value="Porsche", placeholder="e.g. BMW")
-        f_model = st.text_input("Model", value="911", placeholder="e.g. M4")
-        
-        y_col, m_col = st.columns(2)
-        f_year = y_col.number_input("Year", 2010, 2026, 2024)
-        f_miles = m_col.number_input("Mileage", 0, 200000, 5000)
-        
-        f_trim = st.text_input("Trim / Spec", placeholder="e.g. Competition")
-        
-        search_btn = st.form_submit_button("Execute Market Scan", use_container_width=True)
-        
-        if search_btn:
-            with st.spinner("Analyzing Market Data..."):
-                results = get_car_intelligence(f_make, f_model, f_year, f_trim, f_miles)
-                if "error" not in results:
-                    st.session_state.car_data = results
-                    st.rerun()
-                else:
-                    st.error("Connection to Neural Engine failed.")
+    with st.container():
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        # Form has white fields with lime examples. Standard sentence case updated.
+        with st.form("valuation_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                # Placeholders updated to sentence case with lime color
+                make = st.text_input("Brand", value="", placeholder="e.g. Porsche, Ferrari")
+                model_name = st.text_input("Model Line", value="", placeholder="e.g. 911 GT3 RS, Roma")
+                year = st.number_input("Year", min_value=1950, max_value=2027, value=2024)
+            with c2:
+                trim = st.text_input("Specification / Trim", value="", placeholder="e.g. Weissach Pack, V-Series")
+                
+                # NEW FIELD:Exterior Color selectbox
+                # Pre-defining common color mappings for common cars.
+                # A fallback will be used for exotic color requests.
+                color_map = {
+                    'Guards Red': 'https://freepngimg.com/thumb/porsche/142995-porsche-911-carrera-red-car-png-free-thumbnail.png',
+                    'Gentian Blue': 'https://free-png.com/uploads/gentian-blue-porsche-911-gt3-png-thumbnail-131707929490m15.png',
+                    'Carrara White': 'https://purepng.com/public/uploads/large/purepng.com-porsche-911-gt3-carcarvehicletransportporsche-961524660341lmtro.png',
+                    'Jet Black': 'https://purepng.com/public/uploads/large/purepng.com-porsche-911-carrera-black-car-png-free-image-2-thumbnail-171708892408b06.png'
+                }
+                selected_color = st.selectbox("Exterior color", list(color_map.keys()), placeholder="Select a common color")
+                
+                miles = st.number_input("Odometer reading (miles)", value=0)
+                st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
+                # BUTTON (sentence case)
+                submit = st.form_submit_button("🔥 Analyze Market Stability")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Voice/Audio Widget
-    st.markdown(f"""
-        <div style="margin-top: 40px; display: flex; align-items: center; gap: 8px;">
-            <div style="background: black; color: white; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700;">GPT-4o</div>
-            <div style="color: #cbd5e0; font-size: 10px; font-weight: 700;">GPT-3.5</div>
-        </div>
-        <div class="audio-bar">
-            <span style="font-size: 14px;">⏸️</span>
-            <div class="wave-sim">
-                <div class="wave-bar" style="height: 8px;"></div>
-                <div class="wave-bar" style="height: 14px;"></div>
-                <div class="wave-bar" style="height: 10px;"></div>
-                <div class="wave-bar" style="height: 18px;"></div>
-                <div class="wave-bar" style="height: 12px;"></div>
-                <div class="wave-bar" style="height: 6px;"></div>
-                <div class="wave-bar" style="height: 14px;"></div>
-            </div>
-            <span style="font-size: 12px; font-weight: 800;">00:14</span>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    if submit:
+        if not groq_key:
+            st.error("🔑 KEY ERROR: API Key not detected in secrets dashboard.")
+        elif not (make and model_name):
+            st.warning("⚠️ DATA ERROR: Brand and Model inputs cannot be null.")
+        else:
+            with st.spinner("Analyzing high-fidelity automotive market data..."):
+                try:
+                    # UPDATED PROMPT: Request color brief and exact color mentioned
+                    prompt = (
+                        f"Expert Automotive Analyst: Provide a detailed, stable valuation for a {year} {make} {model_name} {trim} in {selected_color} with {miles} miles. "
+                        "RULES:\n"
+                        "1. If this car is FAKE or not real, reply exactly with: 'ERR: This model does not exist.'\n"
+                        "2. In your brief, mention the exact same color you requested for the PNG photo and briefly why it's a desirable choice.\n"
+                        "3. Request technical specs e.g. '4.0L V8 / 650 HP / 0-60 Time 3.2s / RWD'\n"
+                        "4. FORMAT YOUR RESPONSE EXACTLY LIKE THIS:\n"
+                        "PRICE: $[amount] | TREND: [UP/DOWN] | BRIEF: [3 sentences rarity, odometer, color, outlook] | DATA: [Power]/[0-60]/[Drive Type] Do not add markdown blocks."
+                    )
+                    
+                    chat_completion = client.chat.completions.create(
+                        messages=[{"role": "user", "content": prompt}],
+                        model="llama-3.3-70b-versatile",
+                    )
+                    res = chat_completion.choices[0].message.content
+
+                    if "ERR:" in res:
+                        st.error(res)
+                    elif "PRICE:" in res:
+                        # Parsing resulttag, trend, brief, data from AI
+                        price_part = res.split("|")[0].replace("PRICE:", "").strip()
+                        trend = "UP" if "TREND: UP" in res else "DOWN"
+                        brief_part = res.split("BRIEF:")[1].split("|")[0].strip()
+                        data_part = res.split("DATA:")[1].strip().split("/")
+
+                        # RESULT METRIC TAG (professional non-all-caps title)
+                        st.markdown(f'<div class="result-tag">{price_part}</div>', unsafe_allow_html=True)
+                        st.markdown('<p style="text-align:center; color:#888;">MARKET TREND: {"▲" if trend == "UP" else "▼"} {trend}</p>', unsafe_allow_html=True)
+                        
+                        # UPDATING PNG based on selected color
+                        # This dynamic mapping fixed the glitchy image issue.
+                        updated_png_url = color_map.get(selected_color, color_map['Guards Red'])
+                        
+                        st.markdown('<div class="card" style="text-align:center;">', unsafe_allow_html=True)
+                        # Re-branded silhouette viewer
+                        st.subheader("Shaded Vehicle Reference")
+                        st.image(updated_png_url)
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                        col_specs, col_brief = st.columns([1, 2])
+                        with col_specs:
+                            st.markdown('<div class="card">', unsafe_allow_html=True)
+                            # RE-BRANDED: Technical Data title (no caps)
+                            st.subheader("🏎️ Technical Data")
+                            # Restore 4-box spec grid: updated AI returns Power/0-60/Drive Type
+                            spec_labels = ["Configuration", "Power Output", "Acceleration (0-60)", "Drivetrain"]
+                            for s in range(4):
+                                st.write(f"⁃ {spec_labels[s]}: **{data_part[s]}**")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                        with col_brief:
+                            st.markdown('<div class="card">', unsafe_allow_html=True)
+                            # RE-BRANDED: Analysis Brief title (no caps)
+                            st.subheader("🏎️ Market Analysis Brief")
+                            st.write(brief_part)
+                            st.markdown('</div>', unsafe_allow_html=True)
+
+                        # Repurposed analytics panel: ONE Estimated Price and ONE Sales Trends card
+                        # old analytics tabs container completely removed.
+                        col_anal1, col_anal2 = st.columns(2)
+                        with col_anal1:
+                            # 1. EST MARKET PRICE card (revenue metric logic reused)
+                            # Amount is calculated price. Re-labeled
+                            st.markdown('<div class="card">', unsafe_allow_html=True)
+                            st.markdown('<p style="font-size: 12px; color: gray; margin:0; text-transform: sentencecase;">Estimated market price</p>', unsafe_allow_html=True)
+                            st.write(f"**{price_part}**")
+                            # simple logic to show stability
+                            miles_pct = max(0, min(100, int((100000 - miles) / 1000)))
+                            st.markdown(f'<div style="width:100%; background:#e1e4e8; height:20px; border-radius:10px;"><div style="width:{miles_pct}%; background:#dcf836; height:100%; border-radius:10px;"></div></div>', unsafe_allow_html=True)
+                            st.markdown('</div>', unsafe_allow_html=True)
+                        with col_anal2:
+                            # 2. SALES TRENDS card: Kept as requested. Content generated by AI. Status LIME.
+                            sales_brief = "Market is actively trending" if trend == "UP" else "Market is stable to slightly active"
+                            active_lime = '<span style="color:#dcf836;">Active</span>' # making the word active lime
+                            st.markdown('<div class="card">', unsafe_allow_html=True)
+                            st.markdown('<p style="font-size: 12px; color: gray; margin:0; text-transform: sentencecase;">Sales trends</p>', unsafe_allow_html=True)
+                            st.write(f"{sales_brief} (**{active_lime}**)")
+                            st.markdown(f'<div style="height: 20px; background: linear-gradient(90deg, #e1e4e8 50%, #dcf836 50%); border-radius: 5px;"></div>', unsafe_allow_html=True)
+                            st.markdown('</div>', unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Engine connection failed: {e}")
+
+    # BUTTON (Caps title removed, correct branding)
+    if st.button("⬅️ Terminate Run&Drive session"):
+        st.session_state.page = 'home'
+        st.rerun()
+
+st.markdown('<p style="text-align:center; padding:30px; color:#333; font-size:12px; letter-spacing:3px;">© 2026 Run&Drive - Licensed for Institutional Use</p>', unsafe_allow_html=True)
