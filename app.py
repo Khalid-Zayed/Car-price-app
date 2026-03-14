@@ -7,115 +7,124 @@ groq_key = st.secrets.get("GROQ_API_KEY")
 if groq_key:
     client = Groq(api_key=groq_key)
 
-# --- CINEMATIC AUTOMOTIVE UI ---
+# --- IMMERSIVE CINEMATIC UI ---
 st.set_page_config(page_title="Auto Intelligence | Excellence", page_icon="🏎️", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&display=swap');
 
+    /* Full-Bleed Dark Theme */
     .stApp {
         background-color: #000000;
         color: #ffffff;
         font-family: 'Inter', sans-serif;
     }
 
-    .hero-title {
-        font-size: 72px !important;
-        font-weight: 800;
+    /* Cinematic Hero Layout */
+    .hero-container {
+        padding-top: 80px;
         text-align: center;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+    }
+    .hero-title {
+        font-size: 82px !important;
+        font-weight: 800;
+        letter-spacing: -3px;
         color: #ffffff;
-        letter-spacing: -2px;
         margin-bottom: 0px;
-        padding-top: 50px;
     }
     .hero-subtitle {
-        text-align: center;
-        color: #888;
-        font-size: 20px;
-        font-weight: 300;
-        margin-bottom: 50px;
-        letter-spacing: 1px;
-    }
-
-    .card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0px;
-        padding: 40px;
-        backdrop-filter: blur(20px);
-        margin-bottom: 25px;
-    }
-
-    .price-wrap {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 30px;
-        margin: 40px 0;
-    }
-    .price-val {
-        font-size: 85px;
-        font-weight: 800;
-        color: #ffffff;
-    }
-    .trend-tag {
+        color: #666;
         font-size: 18px;
-        padding: 8px 16px;
-        border: 1px solid rgba(255,255,255,0.2);
-        font-weight: 600;
-        letter-spacing: 1px;
+        font-weight: 300;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        margin-bottom: 60px;
     }
 
-    .stButton>button {
-        background-color: transparent !important;
-        color: #ffffff !important;
-        border: 1px solid #ffffff !important;
-        border-radius: 0px !important;
-        font-weight: 400 !important;
+    /* High-Contrast Action Terminal */
+    .terminal-card {
+        background: #080808;
+        border: 1px solid #1a1a1a;
+        padding: 50px;
+        margin-top: -20px;
+    }
+
+    /* Executive Price Metric */
+    .metric-value {
+        font-size: 100px;
+        font-weight: 800;
+        letter-spacing: -4px;
+        text-align: center;
+        margin-top: 40px;
+    }
+    .metric-label {
+        color: #444;
         text-transform: uppercase;
         letter-spacing: 2px;
-        height: 60px !important;
-        width: 100% !important;
-    }
-    .stButton>button:hover {
-        background-color: #ffffff !important;
-        color: #000000 !important;
+        text-align: center;
+        font-size: 14px;
     }
 
+    /* Minimalist Technical Table */
+    .spec-item {
+        border-bottom: 1px solid #111;
+        padding: 15px 0;
+        display: flex;
+        justify-content: space-between;
+        color: #888;
+    }
+    .spec-val { color: #fff; font-weight: 600; }
+
+    /* Stealth Form Inputs */
     input {
         background-color: #000 !important;
-        border: 1px solid #333 !important;
-        color: white !important;
+        border: 1px solid #222 !important;
         border-radius: 0px !important;
+        color: white !important;
+        padding: 12px !important;
+    }
+    .stButton>button {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: none !important;
+        border-radius: 0px !important;
+        font-weight: 700 !important;
+        letter-spacing: 1px;
+        height: 55px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
 if 'page' not in st.session_state: st.session_state.page = 'home'
 
-# --- PAGE: HOME ---
+# --- PAGE: HOME (SHADED EXCELLENCE) ---
 if st.session_state.page == 'home':
+    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
     st.markdown('<h1 class="hero-title">Automotive Excellence</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="hero-subtitle">High-fidelity market quantification for exclusive marques.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="hero-subtitle">Institutional Valuation Portal</p>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1,4,1])
+    col1, col2, col3 = st.columns([1,5,1])
     with col2:
-        st.image("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=2000")
-        st.markdown('<div style="height:40px;"></div>', unsafe_allow_html=True)
+        # Shaded vehicle silhouette matching your reference
+        st.image("https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=2000", use_container_width=True)
+        st.markdown('<div style="height:50px;"></div>', unsafe_allow_html=True)
         
-        c1, c2, c3 = st.columns([1,2,1])
+        c1, c2, c3 = st.columns([1,1,1])
         with c2:
-            if st.button("Initialize Terminal"):
+            if st.button("ENTER TERMINAL"):
                 st.session_state.page = 'engine'
                 st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PAGE: ENGINE ---
+# --- PAGE: ENGINE (THE DASHBOARD) ---
 else:
-    st.markdown('<div style="padding: 20px;"><h1 style="font-weight:800; letter-spacing:-1px;">VALUATION TERMINAL</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div style="padding: 40px 0;"><h2 style="font-weight:800; letter-spacing:-1px; text-align:center;">MARKET ANALYSIS TERMINAL</h2></div>', unsafe_allow_html=True)
     
-    with st.container():
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    col_main1, col_main2, col_main3 = st.columns([1,6,1])
+    with col_main2:
+        st.markdown('<div class="terminal-card">', unsafe_allow_html=True)
         with st.form("valuation_form"):
             c1, c2 = st.columns(2)
             with c1:
@@ -123,61 +132,60 @@ else:
                 model_name = st.text_input("MODEL LINE", placeholder="e.g. 911 GT3")
                 year = st.number_input("PRODUCTION YEAR", min_value=1950, max_value=2027, value=2024)
             with c2:
-                trim = st.text_input("SPECIFICATION", placeholder="e.g. Touring")
+                trim = st.text_input("SPECIFICATION", placeholder="e.g. RS")
                 miles = st.number_input("ODOMETER (MILES)", value=0)
                 st.markdown('<div style="height:28px;"></div>', unsafe_allow_html=True)
-                submit = st.form_submit_button("EXECUTE ANALYSIS")
+                submit = st.form_submit_button("GENERATE REPORT")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    if submit:
-        with st.spinner("Analyzing market and technical specifications..."):
-            try:
-                # INTEGRATED SPEC SHEET PROMPT
-                prompt = (
-                    f"Expert Automotive Analyst: Value and spec a {year} {make} {model_name} {trim} with {miles} miles. "
-                    "STRICT STABILITY RULES:\n"
-                    "1. PRICE STABILITY: Only change price in 1,000-mile tiers. No changes for small gaps.\n"
-                    "2. FORMAT: Respond exactly like this:\n"
-                    "PRICE: $[amount] | TREND: [UP/DOWN] | BRIEF: [3 sentence summary]\n"
-                    "SPECS: [Engine type] / [Horsepower] / [0-60 MPH] / [Drivetrain]"
-                )
-                
-                chat_completion = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama-3.3-70b-versatile",
-                )
-                res = chat_completion.choices[0].message.content
+        if submit:
+            with st.spinner("Executing high-fidelity analysis..."):
+                try:
+                    # Model: Llama-3.3-70b-versatile for high precision
+                    prompt = (
+                        f"Professional Valuation: {year} {make} {model_name} {trim} with {miles} miles. "
+                        "RULES: 1. Price is stable in 1,000-mile blocks. 2. Use institutional language.\n"
+                        "FORMAT: PRICE: $[amount] | TREND: [UP/DOWN] | SUMMARY: [3 professional sentences]\n"
+                        "DATA: [Engine] / [Horsepower] / [0-60 Time] / [Drive Type]"
+                    )
+                    
+                    chat_completion = client.chat.completions.create(
+                        messages=[{"role": "user", "content": prompt}],
+                        model="llama-3.3-70b-versatile",
+                    )
+                    raw = chat_completion.choices[0].message.content
 
-                # Parsing
-                price = res.split("|")[0].replace("PRICE:", "").strip()
-                trend = "UP" if "TREND: UP" in res else "DOWN"
-                brief = res.split("BRIEF:")[1].split("SPECS:")[0].strip()
-                specs = res.split("SPECS:")[1].strip()
+                    # Parsing for the new high-end layout
+                    price = raw.split("|")[0].replace("PRICE:", "").strip()
+                    trend = "UP" if "TREND: UP" in raw else "DOWN"
+                    summary = raw.split("SUMMARY:")[1].split("DATA:")[0].strip()
+                    data_points = raw.split("DATA:")[1].strip().split(" / ")
 
-                st.markdown(f'''
-                    <div class="price-wrap">
-                        <div class="price-val">{price}</div>
-                        <div class="trend-tag">{"▲" if trend == "UP" else "▼"} {trend} MARKET</div>
-                    </div>
-                ''', unsafe_allow_html=True)
-                
-                col_spec, col_brief = st.columns([1, 2])
-                with col_spec:
-                    st.markdown('<div class="card">', unsafe_allow_html=True)
-                    st.markdown('### Technical Specs')
-                    for s in specs.split(" / "):
-                        st.write(f"⁃ {s}")
-                    st.markdown('</div>', unsafe_allow_html=True)
-                with col_brief:
-                    st.markdown('<div class="card">', unsafe_allow_html=True)
-                    st.markdown('### Executive Summary')
-                    st.write(brief)
-                    st.markdown('</div>', unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Analysis failed: {e}")
+                    # Large Metric Display
+                    st.markdown(f'<div class="metric-label">Estimated Market Value (USD)</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="metric-value">{price}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<p style="text-align:center; color:#888;">MARKET DIRECTION: {"▲" if trend == "UP" else "▼"} {trend}</p>', unsafe_allow_html=True)
+                    
+                    st.markdown('<div style="height:50px;"></div>', unsafe_allow_html=True)
+                    
+                    # Split Detailed View
+                    col_left, col_right = st.columns(2)
+                    with col_left:
+                        st.markdown('<h4 style="color:#666; font-size:12px; letter-spacing:2px;">TECHNICAL DATA</h4>', unsafe_allow_html=True)
+                        labels = ["Engine Configuration", "Power Output", "Acceleration (0-60)", "Drivetrain"]
+                        for label, val in zip(labels, data_points):
+                            st.markdown(f'<div class="spec-item">{label} <span class="spec-val">{val}</span></div>', unsafe_allow_html=True)
+                    
+                    with col_right:
+                        st.markdown('<h4 style="color:#666; font-size:12px; letter-spacing:2px;">EXECUTIVE SUMMARY</h4>', unsafe_allow_html=True)
+                        st.write(summary)
 
-    if st.button("← TERMINATE SESSION"):
+                except Exception as e:
+                    st.error(f"Analysis engine timeout: {e}")
+
+    st.markdown('<div style="height:100px;"></div>', unsafe_allow_html=True)
+    if st.button("TERMINATE SESSION"):
         st.session_state.page = 'home'
         st.rerun()
 
-st.markdown('<p style="text-align:center; padding:60px; color:#333; font-size:11px; letter-spacing:3px;">© 2026 AUTO INTELLIGENCE | PRIVATE SECTOR PORTAL</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; padding:60px; color:#222; font-size:10px; letter-spacing:5px;">© 2026 AUTO INTELLIGENCE | ENCRYPTED CHANNEL</p>', unsafe_allow_html=True)
