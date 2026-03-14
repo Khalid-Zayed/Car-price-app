@@ -9,12 +9,12 @@ if groq_key:
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
 
-# --- STYLING: PREMIUM DARK THEME & SYMMETRICAL CARDS ---
+# --- STYLING: VIBRANT LIGHT THEME ---
 st.markdown("""
     <style>
-    /* Dark Theme Background */
+    /* Vibrant Light White Background */
     .stApp {
-        background-color: #0b0d10;
+        background-color: #f8f9fa;
     }
     
     .hero-container {
@@ -30,7 +30,8 @@ st.markdown("""
         background-color: #ffffff !important;
         border-radius: 20px !important;
         padding: 40px !important;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+        border: 1px solid #eee !important;
     }
     
     label {
@@ -46,12 +47,13 @@ st.markdown("""
         border-radius: 15px;
         border-bottom: 8px solid #32cd32;
         text-align: center;
-        height: 280px; /* Locked height for identical sizing */
+        height: 280px; 
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         margin-top: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.03);
     }
 
     /* SOLID PRICE VISIBILITY: High-contrast lime green */
@@ -80,7 +82,7 @@ st.markdown("""
     }
 
     .spec-value {
-        color: #ffffff;
+        color: #1a1a1a; /* Darker for readability on light background */
         font-size: 1.8rem;
         font-weight: 600;
     }
@@ -123,7 +125,6 @@ if submit:
     else:
         with st.spinner("Analyzing Institutional Data..."):
             try:
-                # Optimized prompt for more accurate prices and specs
                 prompt = (
                     f"Perform an institutional market analysis for a {year} {brand} {model} {trim} with {miles} miles. "
                     "Be highly accurate with performance specs and current auction pricing. "
@@ -136,15 +137,13 @@ if submit:
                     model="llama-3.3-70b-versatile"
                 ).choices[0].message.content
                 
-                # Parsing the AI response
                 price = res.split("PRICE:")[1].split("|")[0].strip()
                 trend = res.split("TREND:")[1].split("|")[0].strip()
                 specs = res.split("SPECS:")[1].strip().split("/")
 
-                # Display Results Header
-                st.markdown(f"<h1 style='text-align:center; color:white; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
+                # Display Results Header (Dark text for light background)
+                st.markdown(f"<h1 style='text-align:center; color:#1a1a1a; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
                 
-                # Symmetrical Sizing for Price and Trend Cards
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(f"""
@@ -163,13 +162,13 @@ if submit:
                     """, unsafe_allow_html=True)
 
                 # Technical Specifications Section
-                st.markdown("<br><h2 style='color:white; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
+                st.markdown("<br><h2 style='color:#1a1a1a; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
                 s1, s2, s3, s4 = st.columns(4)
                 
                 labels = ["Engine", "Power", "0-60 MPH", "Top Speed"]
                 for col, label, val in zip([s1, s2, s3, s4], labels, specs):
                     col.markdown(f"""
-                        <div style="margin-top:20px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
+                        <div style="margin-top:20px; background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
                             <p class="spec-label">{label}</p>
                             <p class="spec-value">{val}</p>
                         </div>
@@ -179,4 +178,4 @@ if submit:
                 st.error("Engine failure. Please ensure your API key is correct and try again.")
 
 # Footer
-st.markdown("<br><br><p style='text-align:center; color:#444;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align:center; color:#888;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
