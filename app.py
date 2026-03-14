@@ -100,7 +100,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Main branding image
-st.image("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=2070", use_column_width=True)
+st.image("https://images.unsplash.com/photo-1684208551877-6595c34bf759?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", use_column_width=True)
 
 # --- 2. THE TERMINAL (INPUT FORM) ---
 st.markdown("<br>", unsafe_allow_html=True)
