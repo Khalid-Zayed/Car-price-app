@@ -7,117 +7,137 @@ groq_key = st.secrets.get("GROQ_API_KEY")
 if groq_key:
     client = Groq(api_key=groq_key)
 
-# --- EXECUTIVE STEALTH UI ---
+# --- PROFESSIONAL EXECUTIVE UI ---
 st.set_page_config(page_title="AutoIntelligence Pro", page_icon="🏎️", layout="wide")
 
 st.markdown("""
     <style>
+    /* Premium Executive Dark Mode */
     .stApp {
-        background-color: #050505;
-        background-image: 
-            url("https://www.transparenttextures.com/patterns/carbon-fibre.png"),
-            radial-gradient(circle at center, #1a0000 0%, #000000 100%);
+        background-color: #0a0a0a;
+        color: #e0e0e0;
+        font-family: 'Inter', -apple-system, sans-serif;
     }
 
-    .main-title {
-        font-family: 'Helvetica Neue', sans-serif;
-        font-size: 65px !important;
-        font-weight: 800;
+    /* Minimalist High-End Title */
+    .hero-title {
+        font-size: 58px !important;
+        font-weight: 700;
         text-align: center;
-        background: linear-gradient(90deg, #00ff00, #00ffff, #ff0000);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -2px;
-        margin-top: 10px;
+        color: #ffffff;
+        letter-spacing: -1.5px;
+        margin-bottom: 5px;
+    }
+    .hero-subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 18px;
+        margin-bottom: 40px;
     }
 
-    .glass-card {
-        background: rgba(30, 30, 30, 0.5);
-        border-radius: 15px;
+    /* Professional Glassmorphism Cards */
+    .card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
         padding: 30px;
-        border: 1px solid rgba(0, 255, 0, 0.2);
         backdrop-filter: blur(10px);
-    }
-    
-    .result-tag {
-        font-size: 60px;
-        font-weight: 900;
-        color: #000000;
-        background: #ffffff;
-        text-align: center;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 25px;
-        border-left: 10px solid #00ff00;
+        margin-bottom: 20px;
     }
 
+    /* Clean Valuation Display */
+    .price-display {
+        font-size: 72px;
+        font-weight: 800;
+        color: #ffffff;
+        text-align: center;
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+    }
+    .trend-indicator {
+        font-size: 24px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    /* Sleek Action Button */
     .stButton>button {
-        background: linear-gradient(90deg, #ff0000, #800000) !important;
-        color: white !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
         border: none !important;
-        border-radius: 6px !important;
-        font-weight: bold !important;
-        height: 55px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        height: 50px !important;
         width: 100% !important;
+        transition: 0.3s all;
+    }
+    .stButton>button:hover {
+        background-color: #cccccc !important;
+        transform: translateY(-2px);
     }
     </style>
     """, unsafe_allow_html=True)
 
 if 'page' not in st.session_state: st.session_state.page = 'home'
 
-# --- PAGE: HOME ---
+# --- PAGE: HOME (MINIMALIST HERO) ---
 if st.session_state.page == 'home':
-    st.markdown('<div style="height:50px;"></div>', unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Auto Intelligence Pro</h1>', unsafe_allow_html=True)
+    st.markdown('<div style="height:80px;"></div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="hero-title">Auto Intelligence Pro</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="hero-subtitle">Institutional grade automotive valuation and market analytics.</p>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1,3,1])
+    col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.image("https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&q=80&w=1200")
-        
-        if st.button("🏁 Access Valuation Engine"):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        # High-res Porsche Image
+        st.image("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200")
+        st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+        if st.button("Begin Valuation"):
             st.session_state.page = 'engine'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PAGE: ENGINE TERMINAL ---
+# --- PAGE: ENGINE (CLEAN DASHBOARD) ---
 else:
-    if st.button("⬅️ Disconnect Session"):
-        st.session_state.page = 'home'
-        st.rerun()
+    col_a, col_b = st.columns([8, 2])
+    with col_b:
+        if st.button("End Session"):
+            st.session_state.page = 'home'
+            st.rerun()
 
-    st.markdown('<h1 class="main-title" style="font-size:40px !important;">Valuation Terminal</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="hero-title" style="font-size:32px !important; text-align:left;">Valuation Terminal</h1>', unsafe_allow_html=True)
     
     with st.container():
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         with st.form("valuation_form"):
             c1, c2 = st.columns(2)
             with c1:
                 make = st.text_input("Brand", value="", placeholder="e.g. Porsche")
-                model_name = st.text_input("Model Line", value="", placeholder="e.g. 911 GT3")
-                year = st.number_input("Production year", min_value=1950, max_value=2027, value=2024)
+                model_name = st.text_input("Model", value="", placeholder="e.g. 911 GT3")
+                year = st.number_input("Year", min_value=1950, max_value=2027, value=2024)
             with c2:
-                trim = st.text_input("Trim / Specification", value="", placeholder="e.g. Weissach Pack")
-                miles = st.number_input("Odometer reading (miles)", value=0)
-                submit = st.form_submit_button("🔥 Execute Market Analysis")
+                trim = st.text_input("Trim specification", value="", placeholder="e.g. Touring")
+                miles = st.number_input("Odometer (miles)", value=0)
+                submit = st.form_submit_button("Analyze Market")
         st.markdown('</div>', unsafe_allow_html=True)
 
     if submit:
         if not (make and model_name):
-            st.warning("Please specify Brand and Model.")
+            st.warning("Input required: Please specify the vehicle brand and model.")
         else:
-            with st.spinner("Analyzing market stability..."):
+            with st.spinner("Accessing institutional market data..."):
                 try:
-                    # UPDATED STABILITY PROMPT: 
-                    # Explicitly forbids price changes for small mileage gaps.
+                    # UPDATED STABILITY PROMPT
                     prompt = (
-                        f"Expert Automotive Appraiser: Value this {year} {make} {model_name} {trim} with {miles} miles. "
-                        "STRICT RULES FOR RELIABILITY:\n"
-                        "1. MILEAGE STABILITY: Do NOT change the price for minor mileage differences (under 1,000 miles). "
-                        "For example, 1,003 miles and 1,004 miles MUST have the exact same price. "
-                        "Only drop the price when major 'thousands' milestones are hit.\n"
-                        "2. OUTPUT FORMAT: Reply ONLY with 'PRICE: [Amount]' then 'BRIEF: [3-sentence summary]'.\n"
-                        "3. THE BRIEF: Explain that the price is based on the current mileage bracket and overall market rarity."
+                        f"Expert Automotive Analyst: Value a {year} {make} {model_name} {trim} with {miles} miles. "
+                        "STRICT STABILITY RULES:\n"
+                        "1. PRICE STABILITY: Only change the price for every 1,000 miles. A difference of 100 miles must not change the price.\n"
+                        "2. TREND: Decide if this specific model is currently 'Appreciating' or 'Depreciating' in the US market.\n"
+                        "3. FORMAT: 'PRICE: $[amount]' | 'TREND: [UP/DOWN]' | 'BRIEF: [3 professional sentences on rarity, mileage tier, and outlook]'"
                     )
                     
                     chat_completion = client.chat.completions.create(
@@ -127,16 +147,28 @@ else:
                     response = chat_completion.choices[0].message.content
 
                     if "PRICE:" in response:
-                        parts = response.split("BRIEF:")
-                        price = parts[0].replace("PRICE:", "").strip()
-                        brief = parts[1].strip() if len(parts) > 1 else "Analysis stable."
+                        # Parsing logic
+                        price = response.split("|")[0].replace("PRICE:", "").strip()
+                        trend_dir = "UP" if "TREND: UP" in response else "DOWN"
+                        brief = response.split("BRIEF:")[1].strip()
 
-                        st.markdown(f'<div class="result-tag">{price}</div>', unsafe_allow_html=True)
-                        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-                        st.subheader("🏎️ Market Executive Brief")
+                        trend_color = "#00ff00" if trend_dir == "UP" else "#ff4b4b"
+                        trend_arrow = "▲" if trend_dir == "UP" else "▼"
+
+                        st.markdown(f'''
+                            <div class="price-display">
+                                {price}
+                                <span class="trend-indicator" style="background: {trend_color}22; color: {trend_color};">
+                                    {trend_arrow} {trend_dir}
+                                </span>
+                            </div>
+                        ''', unsafe_allow_html=True)
+                        
+                        st.markdown('<div class="card">', unsafe_allow_html=True)
+                        st.markdown('### Executive Market Brief')
                         st.write(brief)
                         st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Engine connection failed: {e}")
 
-st.markdown('<p style="text-align:center; padding:20px; color:#333;">© 2026 Auto Intelligence | Professional Grade</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; padding:40px; color:#444; font-size:12px;">© 2026 Auto Intelligence | Licensed for Institutional Use</p>', unsafe_allow_html=True)
