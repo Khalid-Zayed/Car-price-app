@@ -9,7 +9,7 @@ if groq_key:
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
 
-# --- STYLING: PREMIUM DARK THEME & LOCKED SYMMETRY ---
+# --- STYLING: PREMIUM DARK THEME & SYMMETRICAL CARDS ---
 st.markdown("""
     <style>
     /* Dark Theme Background */
@@ -25,20 +25,21 @@ st.markdown("""
         border-radius: 0 0 40px 40px;
     }
     
-    /* Search Terminal Styling */
+    /* Search Terminal Styling: White Form with Lime Text */
     [data-testid="stForm"] {
-        background-color: #161a1d !important;
-        border: 1px solid #2d3436 !important;
+        background-color: #ffffff !important;
         border-radius: 20px !important;
         padding: 40px !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
     }
     
     label {
         color: #32cd32 !important; 
         font-weight: 700 !important;
+        font-size: 1.1rem !important;
     }
 
-    /* CARD SYMMETRY FIX: Explicit height and Flexbox alignment */
+    /* CARD SYMMETRY FIX: Forced height and flex alignment */
     .stat-card {
         background: #ffffff;
         padding: 40px 20px;
@@ -53,10 +54,11 @@ st.markdown("""
         margin-top: 20px;
     }
 
-    /* SOLID PRICE VISIBILITY: High contrast lime */
+    /* SOLID PRICE VISIBILITY: High-contrast lime green */
     .price-text {
         color: #32cd32 !important;
-        font-size: 4rem !important;
+        opacity: 1 !important;
+        font-size: 3.8rem !important;
         font-weight: 900 !important;
         margin: 0 !important;
         line-height: 1 !important;
@@ -64,7 +66,7 @@ st.markdown("""
 
     .trend-text {
         color: #000000;
-        font-size: 3.5rem;
+        font-size: 3.2rem;
         font-weight: 800;
         margin: 0;
     }
@@ -74,6 +76,7 @@ st.markdown("""
         font-size: 0.9rem;
         font-weight: bold;
         text-transform: uppercase;
+        margin-bottom: 5px;
     }
 
     .spec-value {
@@ -96,45 +99,52 @@ st.markdown("""
     </div>
     """, unsafe_allow_html=True)
 
+# Main branding image
 st.image("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=2070", use_column_width=True)
 
-# --- 2. THE TERMINAL ---
-col_left, col_mid, col_right = st.columns([1, 2, 1])
+# --- 2. THE TERMINAL (INPUT FORM) ---
+st.markdown("<br>", unsafe_allow_html=True)
+col_l, col_mid, col_r = st.columns([1, 2, 1])
 
 with col_mid:
     with st.form("main_engine"):
-        st.markdown("<h3 style='color:white;'>Market Analysis Terminal</h3>", unsafe_allow_html=True)
-        brand = st.text_input("Brand", placeholder="e.g. Porsche")
-        model = st.text_input("Model", placeholder="e.g. 911 GT3")
-        year = st.number_input("Year", min_value=1990, max_value=2026, value=2024)
-        miles = st.number_input("Mileage", value=2500)
-        trim = st.text_input("Trim", placeholder="e.g. RS Package")
+        st.markdown("<h3 style='color:#000; text-align:center;'>Market Analysis Terminal</h3>", unsafe_allow_html=True)
+        brand = st.text_input("Car Brand", placeholder="e.g. Volkswagen")
+        model = st.text_input("Model Line", placeholder="e.g. Tiguan")
+        year = st.number_input("Production Year", min_value=1990, max_value=2026, value=2024)
+        miles = st.number_input("Current Mileage", value=5000)
+        trim = st.text_input("Specific Trim", placeholder="e.g. R-Line")
         submit = st.form_submit_button("Execute Market Scan")
 
 # --- 3. DYNAMIC RESULTS ---
 if submit:
     if not (brand and model):
-        st.warning("Please provide details.")
+        st.warning("Please provide vehicle details.")
     else:
-        with st.spinner("Analyzing Intelligence..."):
+        with st.spinner("Analyzing Institutional Data..."):
             try:
+                # Optimized prompt for more accurate prices and specs
                 prompt = (
-                    f"Analyze {year} {brand} {model} {trim} with {miles} miles. "
-                    "Return exactly: PRICE: [value] | TREND: [status] | "
-                    "SPECS: [Engine]/[Power]/[0-60 Time]/[Top Speed]"
+                    f"Perform an institutional market analysis for a {year} {brand} {model} {trim} with {miles} miles. "
+                    "Be highly accurate with performance specs and current auction pricing. "
+                    "Return exactly this format: PRICE: [value] | TREND: [status] | "
+                    "SPECS: [Engine Type]/[Horsepower]/[0-60 MPH]/[Top Speed]"
                 )
+                
                 res = client.chat.completions.create(
                     messages=[{"role": "user", "content": prompt}],
                     model="llama-3.3-70b-versatile"
                 ).choices[0].message.content
                 
+                # Parsing the AI response
                 price = res.split("PRICE:")[1].split("|")[0].strip()
                 trend = res.split("TREND:")[1].split("|")[0].strip()
                 specs = res.split("SPECS:")[1].strip().split("/")
 
+                # Display Results Header
                 st.markdown(f"<h1 style='text-align:center; color:white; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
                 
-                # Symmetrical Card Layout
+                # Symmetrical Sizing for Price and Trend Cards
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(f"""
@@ -152,19 +162,21 @@ if submit:
                         </div>
                     """, unsafe_allow_html=True)
 
-                # Premium Technical Specs Section
+                # Technical Specifications Section
                 st.markdown("<br><h2 style='color:white; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
                 s1, s2, s3, s4 = st.columns(4)
                 
-                for col, label, val in zip([s1, s2, s3, s4], ["Engine", "Power", "0-60 MPH", "Top Speed"], specs):
+                labels = ["Engine", "Power", "0-60 MPH", "Top Speed"]
+                for col, label, val in zip([s1, s2, s3, s4], labels, specs):
                     col.markdown(f"""
-                        <div style="margin-top:20px;">
+                        <div style="margin-top:20px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
                             <p class="spec-label">{label}</p>
                             <p class="spec-value">{val}</p>
                         </div>
                     """, unsafe_allow_html=True)
 
             except Exception as e:
-                st.error("Engine failure. Please retry.")
+                st.error("Engine failure. Please ensure your API key is correct and try again.")
 
+# Footer
 st.markdown("<br><br><p style='text-align:center; color:#444;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
