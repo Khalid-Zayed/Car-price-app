@@ -73,7 +73,6 @@ if st.session_state.page == 'home':
     col1, col2, col3 = st.columns([1,3,1])
     with col2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        # Professional Hero Image
         st.image("https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&q=80&w=1200")
         
         if st.button("🏁 Access Valuation Engine"):
@@ -109,13 +108,16 @@ else:
         else:
             with st.spinner("Analyzing market stability..."):
                 try:
-                    # UPDATED PROMPT: Added logic to ignore micro-changes in mileage
+                    # UPDATED STABILITY PROMPT: 
+                    # Explicitly forbids price changes for small mileage gaps.
                     prompt = (
-                        f"Professional US Auto Market Expert: Provide a valuation for a {year} {make} {model_name} {trim} with {miles} miles. "
-                        "RULES:\n"
-                        f"1. MILEAGE LOGIC: Do NOT change the price for minor mileage differences (under 50 miles). A 4-mile difference should almost never change the price. Focus on major wear tiers.\n"
-                        "2. FORMAT: Reply exactly with 'PRICE: [Amount]' then 'BRIEF: [Summary]'.\n"
-                        "3. THE BRIEF: Provide a 3-sentence professional brief. Include current market demand, how the odometer affects this specific model's value, and a 12-month value forecast."
+                        f"Expert Automotive Appraiser: Value this {year} {make} {model_name} {trim} with {miles} miles. "
+                        "STRICT RULES FOR RELIABILITY:\n"
+                        "1. MILEAGE STABILITY: Do NOT change the price for minor mileage differences (under 1,000 miles). "
+                        "For example, 1,003 miles and 1,004 miles MUST have the exact same price. "
+                        "Only drop the price when major 'thousands' milestones are hit.\n"
+                        "2. OUTPUT FORMAT: Reply ONLY with 'PRICE: [Amount]' then 'BRIEF: [3-sentence summary]'.\n"
+                        "3. THE BRIEF: Explain that the price is based on the current mileage bracket and overall market rarity."
                     )
                     
                     chat_completion = client.chat.completions.create(
@@ -127,7 +129,7 @@ else:
                     if "PRICE:" in response:
                         parts = response.split("BRIEF:")
                         price = parts[0].replace("PRICE:", "").strip()
-                        brief = parts[1].strip() if len(parts) > 1 else "No brief available."
+                        brief = parts[1].strip() if len(parts) > 1 else "Analysis stable."
 
                         st.markdown(f'<div class="result-tag">{price}</div>', unsafe_allow_html=True)
                         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
