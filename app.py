@@ -1,182 +1,115 @@
 import streamlit as st
 from groq import Groq
+from google import genai
+from google.genai import types
+from io import BytesIO
+from PIL import Image
 
-# --- AUTHENTICATION ---
+# --- 1. AUTHENTICATION ---
+# Get your keys from the Streamlit "Secrets" dashboard
 groq_key = st.secrets.get("GROQ_API_KEY")
-if groq_key:
-    client = Groq(api_key=groq_key)
+google_key = st.secrets.get("GOOGLE_API_KEY")
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
+client_groq = Groq(api_key=groq_key)
+client_google = genai.Client(api_key=google_key)
 
-# --- STYLING: HIGH-READABILITY LIGHT THEME ---
-# --- STYLING: LIGHT VIBRANT THEME & SECURITY LOCK ---
+# --- 2. PAGE SETUP & DESIGN ---
+st.set_page_config(page_title="Run&Drive | AI Analytics", layout="wide")
+
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
-
-    /* 1. VIBRANT LIGHT BACKGROUND */
-    .stApp {
-        background-color: #ffffff;
-    }
+    .stApp { background-color: #ffffff; }
     
-    /* 2. SECURITY: HIDE MENU & SOURCE CODE BUTTONS */
-    #MainMenu {visibility: hidden;} 
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display:none;}
-    div[data-testid="stToolbar"] {display: none;}
+    /* Security: Hides GitHub links and menus */
+    #MainMenu, footer, header, .stDeployButton, div[data-testid="stToolbar"] {visibility: hidden; display: none;}
 
-    /* 3. HERO TITLE: BOLD & READABLE */
-    .header-container {
-        text-align: center;
-        padding: 50px 0 20px 0;
-    }
-    
     .main-title {
         font-family: 'Montserrat', sans-serif;
         font-size: 6rem;
-        font-weight: 900;
-        color: #000000 !important;
-        margin-bottom: 0;
-        letter-spacing: -3px;
-        line-height: 1;
-    }
-
-    .sub-title {
-        font-size: 1.4rem;
-        color: #32cd32;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 5px;
-    }
-    
-    /* 4. CARDS & INPUTS */
-    [data-testid="stForm"] {
-        background-color: #ffffff !important;
-        border-radius: 20px !important;
-        padding: 40px !important;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.06) !important;
-        border: 1px solid #f0f0f0 !important;
-    }
-    
-    label {
-        color: #32cd32 !important; 
-        font-weight: 700 !important;
-    }
-
-    .stat-card {
-        background: #ffffff;
-        padding: 40px 20px;
-        border-radius: 15px;
-        border-bottom: 8px solid #32cd32;
-        text-align: center;
-        height: 280px; 
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.04);
-        border: 1px solid #f5f5f5;
-    }
-
-    .price-text {
-        color: #32cd32 !important;
-        font-size: 4rem !important;
-        font-weight: 900 !important;
-    }
-
-    .trend-text {
         color: #000000;
-        font-size: 3.2rem;
-        font-weight: 800;
+        text-align: center;
+        line-height: 1;
+        margin-bottom: 0;
     }
 
-    .spec-value {
-        color: #1a1a1a;
-        font-size: 1.7rem;
-        font-weight: 700;
+    /* AI IMAGE CONTAINER */
+    .img-container {
+        position: relative;
+        width: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 4px solid #32cd32;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .img-tag {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        border-left: 4px solid #32cd32;
+    }
+
+    /* STAT CARDS */
+    .stat-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        border-bottom: 6px solid #32cd32;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     }
     </style>
     """, unsafe_allow_html=True)
-   
 
-# --- 1. ENHANCED HERO SECTION ---
-st.markdown("""
-    <div class="header-container">
-        <h1 class="main-title">Run&Drive</h1>
-        <p class="sub-title">Automotive Excellence</p>
-    </div>
-    """, unsafe_allow_html=True)
+# --- 3. THE INTERFACE ---
+st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; color:#32cd32; font-weight:800; letter-spacing:5px;">AI GENERATED ANALYTICS</p>', unsafe_allow_html=True)
 
-# Cadillac Banner
-st.image("https://cdn.dlron.us/static/dealer-27085/2024_Cadillac_Escalade/banner_2024_Cadillac_Escalade.jpg?v=ht3cO0GIsRU8HoPCdrCEsw==", use_column_width=True)
+with st.columns([1,2,1])[1]:
+    with st.form("car_form"):
+        brand = st.text_input("Brand")
+        model = st.text_input("Model")
+        year = st.number_input("Year", value=2024)
+        submit = st.form_submit_button("Start AI Analysis")
 
-# --- 2. INPUT TERMINAL ---
-st.markdown("<br>", unsafe_allow_html=True)
-col_l, col_mid, col_r = st.columns([1, 2, 1])
+# --- 4. THE MAGIC ---
+if submit and brand and model:
+    with st.spinner("AI is thinking and drawing..."):
+        try:
+            # A. GET MARKET DATA (Groq)
+            text_prompt = f"Analyze {year} {brand} {model}. Format: PRICE: [val] | TREND: [status] | SPECS: [E]/[P]/[0]/[T]"
+            res = client_groq.chat.completions.create(messages=[{"role":"user","content":text_prompt}], model="llama-3.3-70b-versatile").choices[0].message.content
+            
+            # B. GENERATE THE IMAGE (Gemini 3.1 Flash Image)
+            img_prompt = f"A high-end, professional automotive studio photograph of a {year} {brand} {model}, cinematic lighting, 4k resolution."
+            response = client_google.models.generate_content(
+                model="gemini-3.1-flash-image-preview",
+                contents=[img_prompt],
+                config=types.GenerateContentConfig(response_modalities=["IMAGE"])
+            )
+            
+            # Show the Image with the custom tag
+            for part in response.parts:
+                if part.inline_data:
+                    img_data = Image.open(BytesIO(part.inline_data.data))
+                    st.markdown('<div class="img-container"><div class="img-tag">PICTURE GENERATED BY RUN&DRIVE AI</div></div>', unsafe_allow_html=True)
+                    st.image(img_data, use_container_width=True)
 
-with col_mid:
-    with st.form("main_engine"):
-        st.markdown("<h3 style='color:#000; text-align:center;'>Market Analysis Terminal</h3>", unsafe_allow_html=True)
-        brand = st.text_input("Car Brand", placeholder="e.g. Volkswagen")
-        model = st.text_input("Model Line", placeholder="e.g. Tiguan")
-        year = st.number_input("Production Year", min_value=1990, max_value=2026, value=2024)
-        miles = st.number_input("Current Mileage", value=5000)
-        trim = st.text_input("Specific Trim", placeholder="e.g. R-Line")
-        submit = st.form_submit_button("Execute Market Scan")
+            # C. DISPLAY THE STATS (Parsing the Llama response)
+            price = res.split("PRICE:")[1].split("|")[0].strip()
+            trend = res.split("TREND:")[1].split("|")[0].strip()
+            
+            c1, c2 = st.columns(2)
+            c1.markdown(f'<div class="stat-card"><h3>MARKET PRICE</h3><h1 style="color:#32cd32;">{price}</h1></div>', unsafe_allow_html=True)
+            c2.markdown(f'<div class="stat-card"><h3>TREND</h3><h1>{trend}</h1></div>', unsafe_allow_html=True)
 
-# --- 3. DYNAMIC RESULTS ---
-if submit:
-    if not (brand and model):
-        st.warning("Please provide vehicle details.")
-    else:
-        with st.spinner("Analyzing Institutional Data..."):
-            try:
-                prompt = (
-                    f"Institutional market analysis for {year} {brand} {model} {trim} with {miles} miles. "
-                    "Return exactly: PRICE: [value] | TREND: [status] | SPECS: [Engine]/[HP]/[0-60]/[Top Speed]"
-                )
-                
-                res = client.chat.completions.create(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="llama-3.3-70b-versatile"
-                ).choices[0].message.content
-                
-                price = res.split("PRICE:")[1].split("|")[0].strip()
-                trend = res.split("TREND:")[1].split("|")[0].strip()
-                specs = res.split("SPECS:")[1].strip().split("/")
+            st.success("✅ Full Scan Successful")
 
-                st.markdown(f"<h1 style='text-align:center; color:#000; margin-top:50px;'>{year} {brand} {model}</h1>", unsafe_allow_html=True)
-                
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.markdown(f"""
-                        <div class="stat-card">
-                            <p style="color:#888; font-weight:bold;">ESTIMATED MARKET PRICE</p>
-                            <p class="price-text">{price}</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with c2:
-                    st.markdown(f"""
-                        <div class="stat-card">
-                            <p style="color:#888; font-weight:bold;">SALES TRENDS</p>
-                            <p class="trend-text">{trend}</p>
-                            <p style="color:#32cd32; font-weight:bold;">Market Status: Active</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                st.markdown("<br><h2 style='color:#000; border-left: 5px solid #32cd32; padding-left:15px;'>Technical Specifications</h2>", unsafe_allow_html=True)
-                s1, s2, s3, s4 = st.columns(4)
-                labels = ["Engine", "Power", "0-60 MPH", "Top Speed"]
-                for col, label, val in zip([s1, s2, s3, s4], labels, specs):
-                    col.markdown(f"""
-                        <div style="margin-top:20px; background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                            <p class="spec-label">{label}</p>
-                            <p class="spec-value">{val}</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error("Engine failure.")
-
-st.markdown("<br><br><p style='text-align:center; color:#888;'>© 2026 Run&Drive Institutional Analytics</p>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"System Error: {e}")
