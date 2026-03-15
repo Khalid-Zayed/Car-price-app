@@ -2,127 +2,116 @@ import streamlit as st
 from groq import Groq
 from google import genai
 from google.genai import types
+import base64
 from io import BytesIO
 from PIL import Image
 
-# --- 1. AUTHENTICATION ---
-# Get your keys from the Streamlit "Secrets" dashboard
+# --- 1. SETUP & AUTH ---
 groq_key = st.secrets.get("GROQ_API_KEY")
 google_key = st.secrets.get("GOOGLE_API_KEY")
 
 client_groq = Groq(api_key=groq_key)
 client_google = genai.Client(api_key=google_key)
 
-# --- 2. PAGE SETUP & DESIGN ---
-st.set_page_config(page_title="Run&Drive | AI Analytics", layout="wide")
+st.set_page_config(page_title="Run&Drive AI", layout="wide")
 
+# --- 2. THE DESIGN (CSS) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
     .stApp { background-color: #ffffff; }
-    
-    /* Security: Hides GitHub links and menus */
     #MainMenu, footer, header, .stDeployButton, div[data-testid="stToolbar"] {visibility: hidden; display: none;}
 
     .main-title {
         font-family: 'Montserrat', sans-serif;
-        font-size: 6rem;
+        font-size: clamp(3rem, 10vw, 6rem);
         color: #000000;
         text-align: center;
-        line-height: 1;
         margin-bottom: 0;
     }
 
-    /* AI IMAGE CONTAINER */
     .img-container {
         position: relative;
         width: 100%;
         border-radius: 20px;
         overflow: hidden;
         border: 4px solid #32cd32;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        margin-top: 20px;
     }
     .img-tag {
         position: absolute;
-        top: 20px;
-        left: 20px;
-        background: rgba(0,0,0,0.7);
-        color: white;
-        padding: 8px 15px;
+        top: 15px;
+        left: 15px;
+        background: rgba(0,0,0,0.8);
+        color: #32cd32;
+        padding: 5px 15px;
         border-radius: 5px;
         font-size: 0.7rem;
         font-weight: bold;
-        border-left: 4px solid #32cd32;
+        z-index: 99;
     }
-
-    /* STAT CARDS */
     .stat-card {
         background: white;
-        padding: 30px;
+        padding: 25px;
         border-radius: 15px;
-        border-bottom: 6px solid #32cd32;
+        border-bottom: 5px solid #32cd32;
         text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        margin-top: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. THE INTERFACE ---
+# --- 3. THE UI ---
 st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center; color:#32cd32; font-weight:800; letter-spacing:5px;">AI GENERATED ANALYTICS</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; color:#32cd32; font-weight:800; letter-spacing:3px;">INSTITUTIONAL AI ANALYTICS</p>', unsafe_allow_html=True)
 
 with st.columns([1,2,1])[1]:
-    with st.form("car_form"):
-        brand = st.text_input("Brand")
-        model = st.text_input("Model")
+    with st.form("main_form"):
+        c1, c2 = st.columns(2)
+        brand = c1.text_input("Brand", placeholder="e.g. BMW")
+        model = c2.text_input("Model", placeholder="e.g. M4")
         year = st.number_input("Year", value=2024)
-        submit = st.form_submit_button("Start AI Analysis")
+        submit = st.form_submit_button("RUN ANALYSIS")
 
-# --- 4. THE MAGIC ---
-# --- 4. THE MAGIC (Updated for Image Generation) ---
+# --- 4. THE EXECUTION ---
 if submit and brand and model:
-    with st.spinner("AI is thinking and drawing..."):
+    with st.spinner("Syncing with Market Engines..."):
         try:
-            # A. GET MARKET DATA (Groq)
+            # A. DATA (Groq)
             text_prompt = f"Analyze {year} {brand} {model}. Format: PRICE: [val] | TREND: [status]"
-            res = client_groq.chat.completions.create(
+            text_res = client_groq.chat.completions.create(
                 messages=[{"role":"user","content":text_prompt}], 
                 model="llama-3.3-70b-versatile"
             ).choices[0].message.content
             
-            # B. GENERATE THE IMAGE (Gemini 3.1 Flash Image)
-            img_prompt = f"A professional studio photograph of a {year} {brand} {model}, cinematic lighting, 4k."
-            
-            # We call the model and explicitly ask for an image response
-            response = client_google.models.generate_content(
+            # B. IMAGE (Gemini 3.1 Flash)
+            img_prompt = f"A professional automotive studio photo of a {year} {brand} {model}, 4k, cinematic."
+            img_res = client_google.models.generate_content(
                 model="gemini-3.1-flash-image-preview",
                 contents=[img_prompt],
                 config=types.GenerateContentConfig(response_modalities=["IMAGE"])
             )
             
-            # --- THE FIX: DISPLAYING THE AI PHOTO ---
-            generated_img = None
-            for part in response.candidates[0].content.parts:
+            # --- THE IMAGE DECODER FIX ---
+            for part in img_res.candidates[0].content.parts:
                 if part.inline_data:
-                    # Convert the raw AI bytes into a viewable image
-                    generated_img = Image.open(BytesIO(part.inline_data.data))
-            
-            if generated_img:
-                st.markdown('<div class="img-container"><div class="img-tag">PICTURE GENERATED BY RUN&DRIVE AI</div></div>', unsafe_allow_html=True)
-                st.image(generated_img, use_container_width=True)
-            else:
-                st.info("Visual generation is initializing... text data synced below.")
+                    # We decode from Base64 to ensure it appears on the screen
+                    img_bytes = base64.b64decode(part.inline_data.data)
+                    final_image = Image.open(BytesIO(img_bytes))
+                    
+                    st.markdown('<div class="img-container"><div class="img-tag">PICTURE GENERATED BY RUN&DRIVE AI</div></div>', unsafe_allow_html=True)
+                    st.image(final_image, use_container_width=True)
 
-            # C. DISPLAY THE STATS
-            price = res.split("PRICE:")[1].split("|")[0].strip()
-            trend = res.split("TREND:")[1].strip()
+            # C. THE STATS
+            price = text_res.split("PRICE:")[1].split("|")[0].strip()
+            trend = text_res.split("TREND:")[1].strip()
             
-            c1, c2 = st.columns(2)
-            c1.markdown(f'<div class="stat-card"><h3>MARKET PRICE</h3><h1 style="color:#32cd32;">{price}</h1></div>', unsafe_allow_html=True)
-            c2.markdown(f'<div class="stat-card"><h3>TREND</h3><h1>{trend}</h1></div>', unsafe_allow_html=True)
-
-            st.success("✅ Full Scan Successful")
+            sc1, sc2 = st.columns(2)
+            sc1.markdown(f'<div class="stat-card"><small>ESTIMATED PRICE</small><h1 style="color:#32cd32;">{price}</h1></div>', unsafe_allow_html=True)
+            sc2.markdown(f'<div class="stat-card"><small>MARKET TREND</small><h1>{trend}</h1></div>', unsafe_allow_html=True)
+            
+            st.success("Analysis Complete")
 
         except Exception as e:
-            # This will tell us if it's an API Key error or something else
-            st.error(f"System Note: {e}")
+            st.error(f"System Offline: {e}")
