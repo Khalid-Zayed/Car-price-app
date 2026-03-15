@@ -10,47 +10,53 @@ if groq_key:
 st.set_page_config(page_title="Run&Drive | Institutional Analytics", layout="wide")
 
 # --- STYLING: HIGH-READABILITY LIGHT THEME ---
+# --- STYLING: LIGHT VIBRANT THEME & SECURITY LOCK ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
 
+    /* 1. VIBRANT LIGHT BACKGROUND */
     .stApp {
         background-color: #ffffff;
     }
     
+    /* 2. SECURITY: HIDE MENU & SOURCE CODE BUTTONS */
+    #MainMenu {visibility: hidden;} 
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display:none;}
+    div[data-testid="stToolbar"] {display: none;}
+
+    /* 3. HERO TITLE: BOLD & READABLE */
     .header-container {
         text-align: center;
-        padding: 60px 0 30px 0;
-        background: transparent;
+        padding: 50px 0 20px 0;
     }
     
-    /* ENHANCED TITLE: Bigger, Bolder, High-Contrast */
     .main-title {
         font-family: 'Montserrat', sans-serif;
-        font-size: 6.5rem; /* Increased size */
+        font-size: 6rem;
         font-weight: 900;
         color: #000000 !important;
         margin-bottom: 0;
         letter-spacing: -3px;
         line-height: 1;
-        /* Subtle shadow to prevent 'ghosting' on bright screens */
-        text-shadow: 2px 2px 0px rgba(0,0,0,0.05); 
     }
 
     .sub-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         color: #32cd32;
         font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 6px;
-        margin-top: 10px;
+        letter-spacing: 5px;
     }
     
+    /* 4. CARDS & INPUTS */
     [data-testid="stForm"] {
         background-color: #ffffff !important;
         border-radius: 20px !important;
         padding: 40px !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.1) !important;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.06) !important;
         border: 1px solid #f0f0f0 !important;
     }
     
@@ -69,41 +75,30 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         justify-content: center;
-        align-items: center;
-        margin-top: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        border: 1px solid #f8f8f8;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+        border: 1px solid #f5f5f5;
     }
 
     .price-text {
         color: #32cd32 !important;
-        font-size: 4.2rem !important;
+        font-size: 4rem !important;
         font-weight: 900 !important;
     }
 
     .trend-text {
         color: #000000;
-        font-size: 3.5rem;
+        font-size: 3.2rem;
         font-weight: 800;
-    }
-
-    .spec-label {
-        color: #32cd32;
-        font-size: 0.9rem;
-        font-weight: bold;
     }
 
     .spec-value {
         color: #1a1a1a;
-        font-size: 1.8rem;
+        font-size: 1.7rem;
         font-weight: 700;
     }
-
-    header {visibility: hidden;}
-    .stDeployButton {display:none;}
-    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
+   
 
 # --- 1. ENHANCED HERO SECTION ---
 st.markdown("""
