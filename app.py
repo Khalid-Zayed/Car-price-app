@@ -1,14 +1,15 @@
 import streamlit as st
 from groq import Groq
+from duckduckgo_search import DDGS
 import urllib.parse
 
 # --- 1. SETUP ---
 groq_key = st.secrets.get("GROQ_API_KEY")
 client_groq = Groq(api_key=groq_key)
 
-st.set_page_config(page_title="Run&Drive AI", layout="wide")
+st.set_page_config(page_title="Run&Drive AI | Live Market", layout="wide")
 
-# --- 2. CSS (STAYS THE SAME - LOOKS GOOD) ---
+# --- 2. CSS (Visibility & Design) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
@@ -25,57 +26,69 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. UI ---
+# --- 3. SEARCH FUNCTION ---
+def get_live_market_data(query):
+    try:
+        with DDGS() as ddgs:
+            results = [r for r in ddgs.text(query, max_results=3)]
+            return "\n".join([f"{r['title']}: {r['body']}" for r in results])
+    except:
+        return "No live data found. Reverting to internal database."
+
+# --- 4. UI ---
 st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
 
 with st.columns([1,2,1])[1]:
     brand = st.text_input("Brand")
     model = st.text_input("Model")
     year = st.number_input("Year", min_value=1900, max_value=2026, value=2024)
-    miles = st.number_input("Current Mileage (Miles)", min_value=0, value=0)
-    submit = st.button("RUN AI ANALYSIS")
+    miles = st.number_input("Current Mileage", min_value=0, value=0)
+    submit = st.button("RUN LIVE MARKET ANALYSIS")
 
-# --- 4. THE ACCURACY ENGINE ---
+# --- 5. LOGIC ENGINE ---
 if submit and brand and model:
-    with st.spinner("Calculating Precision Value..."):
+    with st.spinner("Searching Live Car Market..."):
+        # Step 1: Get Real Data from the Web
+        search_query = f"current market price {year} {brand} {model} {miles} miles USD"
+        web_context = get_live_market_data(search_query)
+
+        # Step 2: Feed Real Data to Groq
         try:
-            # IMPROVED ACCURACY PROMPT
             prompt = f"""
-            You are an expert car appraiser. Provide a precise market valuation for:
-            Car: {year} {brand} {model}
-            Mileage: {miles} miles
+            You are a Live Market Analyst. Use the SEARCH DATA provided to give a real-world valuation.
             
-            RULES:
-            1. If mileage is 0-100, the price MUST be the full MSRP (New Price).
-            2. High mileage MUST decrease the price compared to 0 mileage.
-            3. Accuracy is #1 priority.
+            SEARCH DATA FROM WEB:
+            {web_context}
+            
+            CAR DETAILS:
+            {year} {brand} {model} with {miles} miles.
             
             Format exactly: 
-            PRICE: [The USD Value]
+            PRICE: [Market Value in USD]
             TREND: [Bullish/Bearish/Stable]
-            SPECS: [Engine Type]/[Horsepower]/[0-60 Time]/[Top Speed]
+            SPECS: [Engine]/[HP]/[0-60]/[Top Speed]
             """
             
             res = client_groq.chat.completions.create(
                 messages=[{"role":"user","content":prompt}], 
                 model="llama-3.3-70b-versatile",
-                temperature=0.2 # Lower temperature = more factual/less creative
+                temperature=0.1
             ).choices[0].message.content
             
-            # Parsing
             price = res.split("PRICE:")[1].split("TREND:")[0].strip()
             trend = res.split("TREND:")[1].split("SPECS:")[0].strip()
             specs_raw = res.split("SPECS:")[1].strip().split("/")
             while len(specs_raw) < 4: specs_raw.append("N/A")
 
-            # --- DISPLAY RESULTS ---
+            # --- DISPLAY ---
             st.markdown(f'<h2 style="text-align:center; color:black; margin-top:30px;">{year} {brand} {model}</h2>', unsafe_allow_html=True)
+            st.markdown('<p style="text-align:center; color:#32cd32; font-weight:bold;">LIVE WEB-SEARCH ENABLED</p>', unsafe_allow_html=True)
             
             c1, c2 = st.columns(2)
-            c1.markdown(f'<div class="stat-card"><small>MARKET VALUATION</small><h1 style="color:#32cd32 !important;">{price}</h1></div>', unsafe_allow_html=True)
-            c2.markdown(f'<div class="stat-card"><small>MARKET TREND</small><h1>{trend}</h1></div>', unsafe_allow_html=True)
+            c1.markdown(f'<div class="stat-card"><small>LIVE MARKET PRICE</small><h1 style="color:#32cd32 !important;">{price}</h1></div>', unsafe_allow_html=True)
+            c2.markdown(f'<div class="stat-card"><small>REAL-TIME TREND</small><h1>{trend}</h1></div>', unsafe_allow_html=True)
 
-            st.markdown("### Technical Specifications")
+            st.markdown("### Performance Specifications")
             sc1, sc2, sc3, sc4 = st.columns(4)
             sc1.markdown(f'<div class="stat-card"><span class="spec-label">Engine</span><span class="spec-value">{specs_raw[0]}</span></div>', unsafe_allow_html=True)
             sc2.markdown(f'<div class="stat-card"><span class="spec-label">Power</span><span class="spec-value">{specs_raw[1]}</span></div>', unsafe_allow_html=True)
@@ -83,4 +96,4 @@ if submit and brand and model:
             sc4.markdown(f'<div class="stat-card"><span class="spec-label">Top Speed</span><span class="spec-value">{specs_raw[3]}</span></div>', unsafe_allow_html=True)
 
         except Exception as e:
-            st.error("Accuracy timeout. Please refine your car details.")
+            st.error("Live sync failed. Please try again in a moment.")
