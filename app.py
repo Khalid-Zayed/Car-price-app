@@ -17,41 +17,37 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
     
-    /* Base Page Settings */
     .stApp { background-color: #ffffff; color: #000000; }
     #MainMenu, footer, header, .stDeployButton, div[data-testid="stToolbar"] {visibility: hidden; display: none;}
     
-    /* Typography */
     .main-title { font-family: 'Montserrat', sans-serif; font-size: 4rem; color: #000000 !important; text-align: center; margin-bottom: 0px; }
     .sub-title { font-family: 'Montserrat', sans-serif; font-size: 1rem; color: #32cd32 !important; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px; }
     
-    /* Force All Labels to Black */
     label, p, span, div, .stMarkdown { color: #000000 !important; font-weight: 700; }
     
-    /* --- ⌨️ THE INPUT FIX (SHOWS YOU ARE TYPING) --- */
+    /* Input Fields & Focus Animation */
     .stTextInput input, .stNumberInput input {
         color: #000000 !important;
         background-color: #ffffff !important;
-        border: 2px solid #eeeeee !important; /* Light grey border default */
+        border: 2px solid #eeeeee !important; 
         border-radius: 8px !important;
-        caret-color: #000000 !important; /* Forces the blinking typing cursor to be black */
+        caret-color: #000000 !important; 
         transition: all 0.3s ease;
     }
     
-    /* When you CLICK on the form to type */
     .stTextInput input:focus, .stNumberInput input:focus, div[data-baseweb="input"]:focus-within {
-        border: 2px solid #32cd32 !important; /* Turns border green */
-        box-shadow: 0 0 10px rgba(50, 205, 50, 0.4) !important; /* Adds a green glow */
+        border: 2px solid #32cd32 !important; 
+        box-shadow: 0 0 10px rgba(50, 205, 50, 0.4) !important; 
         outline: none !important;
         background-color: #fafafa !important;
     }
 
     ::placeholder { color: #aaaaaa !important; opacity: 1; }
 
-    /* --- 🔘 PERMANENT GREEN BUTTON WITH HOVER POP --- */
+    /* --- 🔘 THE BUTTON: PERMANENT GREEN + HOVER POP --- */
     div.stButton > button:first-child { 
-        background-color: #32cd32 !important; /* Box is permanently Green */
-        color: #000000 !important;           /* Text is permanently Black */
+        background-color: #32cd32 !important; 
+        color: #000000 !important;           
         font-weight: 900 !important; 
         font-family: 'Montserrat', sans-serif !important;
         text-transform: uppercase !important;
@@ -63,15 +59,14 @@ st.markdown("""
         margin-top: 20px !important;
     }
 
-    /* Hover Effect: Box gets slightly bigger to indicate it's clickable */
     div.stButton > button:first-child:hover { 
-        transform: scale(1.03) !important; /* Increases size by 3% */
-        box-shadow: 0 12px 24px rgba(50, 205, 50, 0.3) !important; /* Adds depth */
-        background-color: #32cd32 !important; /* Stays green */
-        color: #000000 !important;           /* Stays black */
+        transform: scale(1.03) !important; 
+        box-shadow: 0 12px 24px rgba(50, 205, 50, 0.3) !important; 
+        background-color: #32cd32 !important; 
+        color: #000000 !important;           
     }
 
-    /* Stats Cards & UI Elements */
+    /* Cards */
     .stat-card { background: #ffffff; padding: 25px; border-radius: 15px; border: 1px solid #eee; border-bottom: 5px solid #32cd32; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
     .stat-card small { color: #000000 !important; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; }
     .stat-card h1 { color: #000000 !important; margin: 5px 0; font-weight: 900; font-size: 2.8rem; }
@@ -81,27 +76,26 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. DEEP MARKET SEARCH LOGIC ---
+# --- 3. UPGRADED SEARCH ENGINE ---
 def deep_market_search(query):
     try:
         with DDGS() as ddgs:
-            # Pulls top 5 results to give the AI enough data to compare mileages
-            results = ddgs.text(query, max_results=5)
-            return "\n".join([f"{r['title']}: {r['body']}" for r in results]) if results else "No specific listings found."
+            # Increased max results and changed query strategy to avoid hallucinated prices
+            results = ddgs.text(query, max_results=6)
+            return "\n".join([f"{r['title']}: {r['body']}" for r in results]) if results else "No data."
     except Exception as e:
         return "Live data sync offline."
 
-# --- 4. THE VERTICAL FORM ---
+# --- 4. THE UI FORM ---
 st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Live Market Analysis 2026</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Live Market Analysis</p>', unsafe_allow_html=True)
 
-# Forms stacked vertically
 with st.container():
-    brand = st.text_input("Car Brand", placeholder="e.g. Maserati")
-    model = st.text_input("Car Model", placeholder="e.g. Ghibli")
-    trim = st.text_input("Trim / Version", placeholder="e.g. Trofeo")
+    brand = st.text_input("Car Brand", placeholder="e.g. Ferrari")
+    model = st.text_input("Car Model", placeholder="e.g. SF90")
+    trim = st.text_input("Trim / Version", placeholder="e.g. Spider")
     year = st.number_input("Year of Manufacture", min_value=1900, max_value=2026, value=2024)
-    miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=0)
+    miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=2000)
     
     submit = st.button("RUN DEEP MARKET ANALYSIS")
 
@@ -109,28 +103,29 @@ with st.container():
 if submit and brand and model:
     with st.spinner("Executing Deep Market Scan..."):
         full_name = f"{year} {brand} {model} {trim}"
-        search_data = deep_market_search(f"for sale {year} {brand} {model} {trim} listings price")
+        
+        # New targeted search looking for MSRP and Used Market Value specifically
+        search_query = f"{full_name} MSRP original price AND used market value {miles} miles price"
+        search_data = deep_market_search(search_query)
         
         try:
-            # Strict prompt to adjust price based on mileage differences
+            # Stricter prompt to ensure realistic numbers
             prompt = f"""
-            Role: Expert Automotive Appraiser.
-            Task: Provide a precise market valuation for a {full_name} with exactly {miles} miles.
-            
-            Use this live internet search data of current listings:
+            Role: Strict Automotive Appraiser.
+            Task: Value a {full_name} with {miles} miles based strictly on this live data:
             {search_data}
             
-            Instructions:
-            1. Find the listed prices for similar vehicles in the data.
-            2. CRITICAL MILEAGE ADJUSTMENT: If the listings you find have HIGHER mileage than {miles}, you must INCREASE your estimated price. If the listings have LOWER mileage than {miles}, you must DECREASE your estimated price.
-            3. Deduce realistic specs for this trim.
+            Rules:
+            1. If you cannot find a specific used listing, base your price on the factory MSRP found in the data, then apply logical depreciation for {miles} miles. DO NOT hallucinate extreme million-dollar markups unless explicitly stated in the data.
+            2. Adjust price UP if miles are extremely low, adjust DOWN if miles are high.
+            3. For "hp", output ONLY the numbers (e.g., "986").
             
-            Format strictly as JSON:
+            Return strictly as JSON:
             {{
               "price": "[Final USD Price]",
               "trend": "[Bullish/Bearish/Stable]",
-              "specs": {{"engine": "[Type]", "hp": "[HP]", "zero_sixty": "[Time]", "top": "[Speed]"}},
-              "why": "[A 2-sentence explanation of how you calculated this price based on the listings found and the specific {miles} miles of the target car.]"
+              "specs": {{"engine": "[Type]", "hp": "[Numbers only]", "zero_sixty": "[Time]", "top": "[Speed]"}},
+              "why": "[Brief explanation of pricing logic based on MSRP or found listings.]"
             }}
             """
             
@@ -140,9 +135,13 @@ if submit and brand and model:
                 temperature=0.1
             ).choices[0].message.content
 
-            # Clean JSON just in case AI wraps it in markdown blocks
             clean_json = response.replace('```json', '').replace('```', '').strip()
             data = json.loads(clean_json)
+
+            # --- HP DISPLAY FIX ---
+            # Cleans the HP output just in case the AI included letters, then adds " HP" manually
+            raw_hp = str(data["specs"]["hp"]).upper().replace("HP", "").strip()
+            formatted_hp = f"{raw_hp} HP"
 
             # --- DISPLAY RESULTS ---
             st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
@@ -153,11 +152,14 @@ if submit and brand and model:
 
             p1, p2, p3, p4 = st.columns(4)
             p1.markdown(f'<div class="stat-card"><small>ENGINE</small><h3>{data["specs"]["engine"]}</h3></div>', unsafe_allow_html=True)
-            p2.markdown(f'<div class="stat-card"><small>POWER</small><h3>{data["specs"]["hp"]}</h3></div>', unsafe_allow_html=True)
+            
+            # HP is now guaranteed to have "HP" next to it
+            p2.markdown(f'<div class="stat-card"><small>POWER</small><h3>{formatted_hp}</h3></div>', unsafe_allow_html=True)
+            
             p3.markdown(f'<div class="stat-card"><small>0-60 MPH</small><h3>{data["specs"]["zero_sixty"]}</h3></div>', unsafe_allow_html=True)
             p4.markdown(f'<div class="stat-card"><small>TOP SPEED</small><h3>{data["specs"]["top"]}</h3></div>', unsafe_allow_html=True)
 
             st.markdown(f'<div class="insight-box"><b>Valuation Logic:</b> {data["why"]}</div>', unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Analysis Failed. Please check inputs and try again.")
+            st.error("Analysis Failed. Please check inputs and try again.")
