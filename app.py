@@ -66,7 +66,7 @@ st.markdown("""
         color: #000000 !important;           
     }
 
-    /* Cards */
+    /* Cards & Result UI */
     .stat-card { background: #ffffff; padding: 25px; border-radius: 15px; border: 1px solid #eee; border-bottom: 5px solid #32cd32; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
     .stat-card small { color: #000000 !important; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; }
     .stat-card h1 { color: #000000 !important; margin: 5px 0; font-weight: 900; font-size: 2.8rem; }
@@ -76,56 +76,54 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. UPGRADED SEARCH ENGINE ---
+# --- 3. SEARCH LOGIC ---
 def deep_market_search(query):
     try:
         with DDGS() as ddgs:
-            # Increased max results and changed query strategy to avoid hallucinated prices
             results = ddgs.text(query, max_results=6)
             return "\n".join([f"{r['title']}: {r['body']}" for r in results]) if results else "No data."
-    except Exception as e:
+    except:
         return "Live data sync offline."
 
-# --- 4. THE UI FORM ---
+# --- 4. THE UI FORM (CLEANED) ---
 st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Live Market Analysis</p>', unsafe_allow_html=True)
 
 with st.container():
-    brand = st.text_input("Car Brand", placeholder="e.g. Ferrari")
-    model = st.text_input("Car Model", placeholder="e.g. SF90")
-    trim = st.text_input("Trim / Version", placeholder="e.g. Spider")
+    # Removed specific SF90 example text
+    brand = st.text_input("Car Brand", placeholder="e.g. Maserati")
+    model = st.text_input("Car Model", placeholder="e.g. Ghibli")
+    trim = st.text_input("Trim / Version", placeholder="e.g. Trofeo")
     year = st.number_input("Year of Manufacture", min_value=1900, max_value=2026, value=2024)
-    miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=2000)
+    # Default mileage set to 0 as requested
+    miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=0)
     
     submit = st.button("RUN DEEP MARKET ANALYSIS")
 
 # --- 5. EXECUTION ENGINE ---
 if submit and brand and model:
-    with st.spinner("Executing Deep Market Scan..."):
+    with st.spinner("Analyzing Global Market Tiers..."):
         full_name = f"{year} {brand} {model} {trim}"
-        
-        # New targeted search looking for MSRP and Used Market Value specifically
         search_query = f"{full_name} MSRP original price AND used market value {miles} miles price"
         search_data = deep_market_search(search_query)
         
         try:
-            # Stricter prompt to ensure realistic numbers
             prompt = f"""
             Role: Strict Automotive Appraiser.
-            Task: Value a {full_name} with {miles} miles based strictly on this live data:
+            Task: Value a {full_name} with {miles} miles using this data:
             {search_data}
             
             Rules:
-            1. If you cannot find a specific used listing, base your price on the factory MSRP found in the data, then apply logical depreciation for {miles} miles. DO NOT hallucinate extreme million-dollar markups unless explicitly stated in the data.
-            2. Adjust price UP if miles are extremely low, adjust DOWN if miles are high.
-            3. For "hp", output ONLY the numbers (e.g., "986").
+            1. Use factory MSRP as a baseline if specific used listings aren't found.
+            2. Apply logic: higher mileage = lower price; lower mileage = higher price.
+            3. For "hp", provide numbers only (e.g., "580").
             
             Return strictly as JSON:
             {{
               "price": "[Final USD Price]",
-              "trend": "[Bullish/Bearish/Stable]",
-              "specs": {{"engine": "[Type]", "hp": "[Numbers only]", "zero_sixty": "[Time]", "top": "[Speed]"}},
-              "why": "[Brief explanation of pricing logic based on MSRP or found listings.]"
+              "trend": "[Status]",
+              "specs": {{"engine": "[Type]", "hp": "[Numbers]", "zero_sixty": "[Time]", "top": "[Speed]"}},
+              "why": "[Explanation of how {miles} miles affected the final valuation.]"
             }}
             """
             
@@ -139,7 +137,6 @@ if submit and brand and model:
             data = json.loads(clean_json)
 
             # --- HP DISPLAY FIX ---
-            # Cleans the HP output just in case the AI included letters, then adds " HP" manually
             raw_hp = str(data["specs"]["hp"]).upper().replace("HP", "").strip()
             formatted_hp = f"{raw_hp} HP"
 
@@ -152,14 +149,11 @@ if submit and brand and model:
 
             p1, p2, p3, p4 = st.columns(4)
             p1.markdown(f'<div class="stat-card"><small>ENGINE</small><h3>{data["specs"]["engine"]}</h3></div>', unsafe_allow_html=True)
-            
-            # HP is now guaranteed to have "HP" next to it
             p2.markdown(f'<div class="stat-card"><small>POWER</small><h3>{formatted_hp}</h3></div>', unsafe_allow_html=True)
-            
             p3.markdown(f'<div class="stat-card"><small>0-60 MPH</small><h3>{data["specs"]["zero_sixty"]}</h3></div>', unsafe_allow_html=True)
             p4.markdown(f'<div class="stat-card"><small>TOP SPEED</small><h3>{data["specs"]["top"]}</h3></div>', unsafe_allow_html=True)
 
             st.markdown(f'<div class="insight-box"><b>Valuation Logic:</b> {data["why"]}</div>', unsafe_allow_html=True)
 
-        except Exception as e:
-            st.error("Analysis Failed. Please check inputs and try again.")
+        except:
+            st.error("Market data sync error. Please try again.")
