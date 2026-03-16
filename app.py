@@ -10,98 +10,127 @@ if not groq_key:
     st.stop()
 
 client_groq = Groq(api_key=groq_key)
-st.set_page_config(page_title="Run&Drive AI", layout="centered")
+st.set_page_config(page_title="Run&Drive AI | Market Pro", layout="centered")
 
-# --- 2. CSS STYLING (FORCED VISIBILITY) ---
+# --- 2. CSS: FOCUS HIGHLIGHTS, GREEN BUTTON & VERTICAL FORMS ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
     
+    /* Base Page Settings */
     .stApp { background-color: #ffffff; color: #000000; }
     #MainMenu, footer, header, .stDeployButton, div[data-testid="stToolbar"] {visibility: hidden; display: none;}
     
+    /* Typography */
     .main-title { font-family: 'Montserrat', sans-serif; font-size: 4rem; color: #000000 !important; text-align: center; margin-bottom: 0px; }
     .sub-title { font-family: 'Montserrat', sans-serif; font-size: 1rem; color: #32cd32 !important; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px; }
     
-    /* Force Input Labels to Black */
+    /* Force All Labels to Black */
     label, p, span, div, .stMarkdown { color: #000000 !important; font-weight: 700; }
     
+    /* --- ⌨️ THE INPUT FIX (SHOWS YOU ARE TYPING) --- */
     .stTextInput input, .stNumberInput input {
         color: #000000 !important;
-        border: 1px solid #ddd !important;
         background-color: #ffffff !important;
+        border: 2px solid #eeeeee !important; /* Light grey border default */
+        border-radius: 8px !important;
+        caret-color: #000000 !important; /* Forces the blinking typing cursor to be black */
+        transition: all 0.3s ease;
+    }
+    
+    /* When you CLICK on the form to type */
+    .stTextInput input:focus, .stNumberInput input:focus, div[data-baseweb="input"]:focus-within {
+        border: 2px solid #32cd32 !important; /* Turns border green */
+        box-shadow: 0 0 10px rgba(50, 205, 50, 0.4) !important; /* Adds a green glow */
+        outline: none !important;
+        background-color: #fafafa !important;
     }
 
-    /* --- 🔘 BUTTON STYLING (THE HOVER FIX) --- */
+    ::placeholder { color: #aaaaaa !important; opacity: 1; }
+
+    /* --- 🔘 PERMANENT GREEN BUTTON WITH HOVER POP --- */
     div.stButton > button:first-child { 
-        background-color: #000000 !important; /* Box stays black */
-        color: #ffffff !important;           /* TEXT IS NOW FORCED WHITE */
+        background-color: #32cd32 !important; /* Box is permanently Green */
+        color: #000000 !important;           /* Text is permanently Black */
         font-weight: 900 !important; 
         font-family: 'Montserrat', sans-serif !important;
         text-transform: uppercase !important;
         width: 100% !important; 
         border-radius: 12px !important; 
-        height: 3.5rem !important; 
-        border: 2px solid #000000 !important; 
-        transition: all 0.3s ease-in-out !important;
+        height: 4rem !important; 
+        border: none !important; 
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease !important;
         margin-top: 20px !important;
     }
 
-    /* Hover State: Box turns Green, Text turns Black */
+    /* Hover Effect: Box gets slightly bigger to indicate it's clickable */
     div.stButton > button:first-child:hover { 
-        background-color: #32cd32 !important; 
-        color: #000000 !important;           /* TEXT TURNS BLACK ON HOVER */
-        border: 2px solid #32cd32 !important;
+        transform: scale(1.03) !important; /* Increases size by 3% */
+        box-shadow: 0 12px 24px rgba(50, 205, 50, 0.3) !important; /* Adds depth */
+        background-color: #32cd32 !important; /* Stays green */
+        color: #000000 !important;           /* Stays black */
     }
 
-    /* Stats & Cards */
-    .stat-card { background: #ffffff; padding: 25px; border-radius: 15px; border: 1px solid #eee; border-bottom: 5px solid #32cd32; text-align: center; margin-bottom: 20px; }
+    /* Stats Cards & UI Elements */
+    .stat-card { background: #ffffff; padding: 25px; border-radius: 15px; border: 1px solid #eee; border-bottom: 5px solid #32cd32; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
     .stat-card small { color: #000000 !important; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; }
     .stat-card h1 { color: #000000 !important; margin: 5px 0; font-weight: 900; font-size: 2.8rem; }
     .stat-card h3 { color: #000000 !important; margin: 0; font-weight: 800; font-size: 1.2rem; }
     .green-text { color: #32cd32 !important; }
-    .insight-box { background: #f9f9f9; padding: 20px; border-radius: 10px; border-left: 5px solid #32cd32; margin-top: 20px; color: #000 !important; }
+    .insight-box { background: #f9f9f9; padding: 20px; border-radius: 10px; border-left: 5px solid #32cd32; margin-top: 20px; color: #000 !important; line-height: 1.6; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. SEARCH LOGIC ---
-def search_market(query):
+# --- 3. DEEP MARKET SEARCH LOGIC ---
+def deep_market_search(query):
     try:
         with DDGS() as ddgs:
-            results = ddgs.text(query, max_results=3)
-            return "\n".join([f"{r['title']}: {r['body']}" for r in results]) if results else "No data."
-    except: return "Live data sync unavailable."
+            # Pulls top 5 results to give the AI enough data to compare mileages
+            results = ddgs.text(query, max_results=5)
+            return "\n".join([f"{r['title']}: {r['body']}" for r in results]) if results else "No specific listings found."
+    except Exception as e:
+        return "Live data sync offline."
 
 # --- 4. THE VERTICAL FORM ---
 st.markdown('<h1 class="main-title">Run&Drive</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Expert Market Intelligence</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Live Market Analysis 2026</p>', unsafe_allow_html=True)
 
-brand = st.text_input("Car Brand", placeholder="Maserati")
-model = st.text_input("Car Model", placeholder="Ghibli")
-trim = st.text_input("Trim / Version", placeholder="Trofeo") # Text removed as requested
-year = st.number_input("Year of Manufacture", 1900, 2026, 2024)
-miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=0)
+# Forms stacked vertically
+with st.container():
+    brand = st.text_input("Car Brand", placeholder="e.g. Maserati")
+    model = st.text_input("Car Model", placeholder="e.g. Ghibli")
+    trim = st.text_input("Trim / Version", placeholder="e.g. Trofeo")
+    year = st.number_input("Year of Manufacture", min_value=1900, max_value=2026, value=2024)
+    miles = st.number_input("Current Odometer Reading (Miles)", min_value=0, value=0)
+    
+    submit = st.button("RUN DEEP MARKET ANALYSIS")
 
-submit = st.button("RUN LIVE MARKET VALUATION")
-
-# --- 5. ACCURACY ENGINE ---
+# --- 5. EXECUTION ENGINE ---
 if submit and brand and model:
-    with st.spinner("Analyzing Global Sales Trends..."):
+    with st.spinner("Executing Deep Market Scan..."):
         full_name = f"{year} {brand} {model} {trim}"
-        search_data = search_market(f"real price {full_name} {miles} miles 2026 USD")
+        search_data = deep_market_search(f"for sale {year} {brand} {model} {trim} listings price")
         
         try:
+            # Strict prompt to adjust price based on mileage differences
             prompt = f"""
-            Analyst: Act as a Senior Car Appraiser in 2026.
-            Vehicle: {full_name} with {miles} miles.
-            Data: {search_data}
+            Role: Expert Automotive Appraiser.
+            Task: Provide a precise market valuation for a {full_name} with exactly {miles} miles.
             
-            Return ONLY this JSON:
+            Use this live internet search data of current listings:
+            {search_data}
+            
+            Instructions:
+            1. Find the listed prices for similar vehicles in the data.
+            2. CRITICAL MILEAGE ADJUSTMENT: If the listings you find have HIGHER mileage than {miles}, you must INCREASE your estimated price. If the listings have LOWER mileage than {miles}, you must DECREASE your estimated price.
+            3. Deduce realistic specs for this trim.
+            
+            Format strictly as JSON:
             {{
-              "price": "[Value]",
-              "trend": "[Status]",
-              "specs": {{"engine": "[Type]", "hp": "[HP]", "zero_sixty": "[0-60]", "top": "[Speed]"}},
-              "why": "[Brief explanation]"
+              "price": "[Final USD Price]",
+              "trend": "[Bullish/Bearish/Stable]",
+              "specs": {{"engine": "[Type]", "hp": "[HP]", "zero_sixty": "[Time]", "top": "[Speed]"}},
+              "why": "[A 2-sentence explanation of how you calculated this price based on the listings found and the specific {miles} miles of the target car.]"
             }}
             """
             
@@ -111,22 +140,24 @@ if submit and brand and model:
                 temperature=0.1
             ).choices[0].message.content
 
-            data = json.loads(response)
+            # Clean JSON just in case AI wraps it in markdown blocks
+            clean_json = response.replace('```json', '').replace('```', '').strip()
+            data = json.loads(clean_json)
 
-            # Display
+            # --- DISPLAY RESULTS ---
             st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
             
             c1, c2 = st.columns(2)
-            c1.markdown(f'<div class="stat-card"><small>VALUE</small><h1 class="green-text">{data["price"]}</h1></div>', unsafe_allow_html=True)
-            c2.markdown(f'<div class="stat-card"><small>TREND</small><h1>{data["trend"]}</h1></div>', unsafe_allow_html=True)
+            c1.markdown(f'<div class="stat-card"><small>ESTIMATED VALUE</small><h1 class="green-text">{data["price"]}</h1></div>', unsafe_allow_html=True)
+            c2.markdown(f'<div class="stat-card"><small>MARKET TREND</small><h1>{data["trend"]}</h1></div>', unsafe_allow_html=True)
 
             p1, p2, p3, p4 = st.columns(4)
             p1.markdown(f'<div class="stat-card"><small>ENGINE</small><h3>{data["specs"]["engine"]}</h3></div>', unsafe_allow_html=True)
             p2.markdown(f'<div class="stat-card"><small>POWER</small><h3>{data["specs"]["hp"]}</h3></div>', unsafe_allow_html=True)
-            p3.markdown(f'<div class="stat-card"><small>0-60</small><h3>{data["specs"]["zero_sixty"]}</h3></div>', unsafe_allow_html=True)
+            p3.markdown(f'<div class="stat-card"><small>0-60 MPH</small><h3>{data["specs"]["zero_sixty"]}</h3></div>', unsafe_allow_html=True)
             p4.markdown(f'<div class="stat-card"><small>TOP SPEED</small><h3>{data["specs"]["top"]}</h3></div>', unsafe_allow_html=True)
 
             st.markdown(f'<div class="insight-box"><b>Valuation Logic:</b> {data["why"]}</div>', unsafe_allow_html=True)
 
-        except:
-            st.error("Accuracy timeout. Check details and retry.")
+        except Exception as e:
+            st.error(f"Analysis Failed. Please check inputs and try again.")
