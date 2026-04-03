@@ -1,27 +1,27 @@
 import streamlit as st
 from groq import Groq
 from duckduckgo_search import DDGS
-from streamlit_gsheets import GSheetsConnection
+from supabase import create_client, Client
 import pandas as pd
 import json
 from datetime import datetime
 
 # --- 1. SETUP ---
+# Fetching keys from Streamlit Secrets
 groq_key = st.secrets.get("GROQ_API_KEY")
-if not groq_key:
-    st.error("API Key Missing: Please add GROQ_API_KEY to your Streamlit Secrets.")
+sb_url = st.secrets.get("SUPABASE_URL")
+sb_key = st.secrets.get("SUPABASE_KEY")
+
+if not all([groq_key, sb_url, sb_key]):
+    st.error("Secrets Missing: Ensure GROQ_API_KEY, SUPABASE_URL, and SUPABASE_KEY are in Secrets.")
     st.stop()
 
 client_groq = Groq(api_key=groq_key)
+supabase: Client = create_client(sb_url, sb_key)
+
 st.set_page_config(page_title="Run&Drive AI | Market Pro", layout="centered")
 
-# Initialize Google Sheets Connection
-try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-except Exception:
-    st.error("Google Sheets connection not configured in Secrets.")
-
-# --- 2. CSS: RESTORED PREMIUM LOOK + CURSOR FIX ---
+# --- 2. CSS: PREMIUM LOOK + CURSOR FIX ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
@@ -34,15 +34,14 @@ st.markdown("""
     
     label, p, span, div, .stMarkdown { color: #000000 !important; font-weight: 700; }
     
-    /* --- BLINKING CURSOR & INPUT FIX --- */
+    /* --- INPUT FIELDS & BLINKING CURSOR FIX --- */
     .stTextInput input, .stNumberInput input {
         color: #000000 !important;
         background-color: #ffffff !important;
         border: 2px solid #eeeeee !important; 
         border-radius: 8px !important;
-        caret-color: #000000 !important; /* FORCES THE BLINKING CURSOR TO BE BLACK */
-        cursor: text !important; /* FORCES THE TEXT SELECTION MOUSE ICON */
-        font-size: 16px !important;
+        caret-color: #000000 !important; /* Forces the blinking slash to show */
+        cursor: text !important;
         transition: all 0.3s ease;
     }
     
@@ -111,7 +110,12 @@ if submit and brand and model:
         search_results = deep_market_search(f"{full_name} specs and market price")
         
         try:
-            prompt = f"Verify and value {full_name} at {miles} miles. Use context: {search_results}. Return JSON with: exists (bool), price (str), trend (str), specs (dict with engine, hp, zero_sixty, top), why (str)."
+            # PROMPT: STRICT VERIFICATION TO STOP FAKE CARS
+            prompt = f"""
+            Verify and value {full_name} at {miles} miles. Use context: {search_results}. 
+            Check if this model/year/trim actually exists. If it's a joke, fake name, or didn't exist in {year}, set 'exists' to false.
+            Return JSON: {{'exists': bool, 'price': 'str', 'trend': 'str', 'specs': {{'engine': 'str', 'hp': 'str', 'zero_sixty': 'str', 'top': 'str'}}, 'why': 'str'}}
+            """
             
             response = client_groq.chat.completions.create(
                 messages=[{"role":"user","content":prompt}],
@@ -124,30 +128,19 @@ if submit and brand and model:
             if not data.get("exists", True):
                 st.error(f"Analysis Rejected: {data['why']}")
             else:
-                # --- BULLETPROOF GOOGLE SHEETS SYNC ---
+                # --- SUPABASE LOGGING ---
                 try:
-                    # 1. Pull data and IGNORE CACHE so it's always fresh
-                    existing_data = conn.read(ttl=0)
-                    
-                    # 2. Drop all empty "phantom" rows Streamlit reads from the bottom of the sheet
-                    existing_data = existing_data.dropna(how="all")
-                    
-                    # 3. Create your new row
-                    log_entry = pd.DataFrame([{
-                        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "Brand": brand, "Model": model, "Trim": clean_trim,
-                        "Year": year, "Miles": miles, "Price_Estimate": data["price"],
-                        "AI_Logic": data["why"]
-                    }])
-                    
-                    # 4. Concatenate and update the sheet
-                    updated_df = pd.concat([existing_data, log_entry], ignore_index=True)
-                    conn.update(data=updated_df)
-                    st.toast("✅ Logged to Admin Sheet")
-                    
+                    supabase.table("car_logs").insert({
+                        "brand": brand,
+                        "model": model,
+                        "year": year,
+                        "price": data["price"],
+                        "miles": miles,
+                        "logic": data["why"]
+                    }).execute()
+                    st.toast("✅ Logged to Admin Dashboard")
                 except Exception as e:
-                    # This will print the exact reason it failed to your screen so we can debug it
-                    st.warning(f"⚠️ Sync Error: {e}")
+                    st.warning(f"⚠️ Log Error: {e}")
 
                 # --- DISPLAY RESULTS ---
                 st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
