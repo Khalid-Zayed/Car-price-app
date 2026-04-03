@@ -21,7 +21,7 @@ try:
 except Exception:
     st.error("Google Sheets connection not configured in Secrets.")
 
-# --- 2. CSS: RESTORED PREMIUM LOOK ---
+# --- 2. CSS: RESTORED PREMIUM LOOK + CURSOR FIX ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
@@ -34,12 +34,15 @@ st.markdown("""
     
     label, p, span, div, .stMarkdown { color: #000000 !important; font-weight: 700; }
     
-    /* Input Fields & Focus Animation */
+    /* --- BLINKING CURSOR & INPUT FIX --- */
     .stTextInput input, .stNumberInput input {
         color: #000000 !important;
         background-color: #ffffff !important;
         border: 2px solid #eeeeee !important; 
         border-radius: 8px !important;
+        caret-color: #000000 !important; /* FORCES THE BLINKING CURSOR TO BE BLACK */
+        cursor: text !important; /* FORCES THE TEXT SELECTION MOUSE ICON */
+        font-size: 16px !important;
         transition: all 0.3s ease;
     }
     
@@ -121,19 +124,30 @@ if submit and brand and model:
             if not data.get("exists", True):
                 st.error(f"Analysis Rejected: {data['why']}")
             else:
-                # --- FAST SYNC LOGIC ---
+                # --- BULLETPROOF GOOGLE SHEETS SYNC ---
                 try:
+                    # 1. Pull data and IGNORE CACHE so it's always fresh
+                    existing_data = conn.read(ttl=0)
+                    
+                    # 2. Drop all empty "phantom" rows Streamlit reads from the bottom of the sheet
+                    existing_data = existing_data.dropna(how="all")
+                    
+                    # 3. Create your new row
                     log_entry = pd.DataFrame([{
                         "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "Brand": brand, "Model": model, "Trim": clean_trim,
                         "Year": year, "Miles": miles, "Price_Estimate": data["price"],
                         "AI_Logic": data["why"]
                     }])
-                    # Directly create/append to the sheet
-                    conn.create(data=log_entry)
+                    
+                    # 4. Concatenate and update the sheet
+                    updated_df = pd.concat([existing_data, log_entry], ignore_index=True)
+                    conn.update(data=updated_df)
                     st.toast("✅ Logged to Admin Sheet")
-                except:
-                    st.warning("⚠️ Sync Error: Results showing but not logged.")
+                    
+                except Exception as e:
+                    # This will print the exact reason it failed to your screen so we can debug it
+                    st.warning(f"⚠️ Sync Error: {e}")
 
                 # --- DISPLAY RESULTS ---
                 st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
