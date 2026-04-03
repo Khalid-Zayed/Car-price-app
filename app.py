@@ -7,13 +7,13 @@ import json
 from datetime import datetime
 
 # --- 1. SETUP ---
-# Fetching keys from Streamlit Secrets
+# Ensure these match your Streamlit Secrets exactly
 groq_key = st.secrets.get("GROQ_API_KEY")
 sb_url = st.secrets.get("SUPABASE_URL")
 sb_key = st.secrets.get("SUPABASE_KEY")
 
 if not all([groq_key, sb_url, sb_key]):
-    st.error("Secrets Missing: Ensure GROQ_API_KEY, SUPABASE_URL, and SUPABASE_KEY are in Secrets.")
+    st.error("Secrets Missing: Check GROQ_API_KEY, SUPABASE_URL, and SUPABASE_KEY.")
     st.stop()
 
 client_groq = Groq(api_key=groq_key)
@@ -40,7 +40,7 @@ st.markdown("""
         background-color: #ffffff !important;
         border: 2px solid #eeeeee !important; 
         border-radius: 8px !important;
-        caret-color: #000000 !important; /* Forces the blinking slash to show */
+        caret-color: #000000 !important; 
         cursor: text !important;
         transition: all 0.3s ease;
     }
@@ -51,7 +51,7 @@ st.markdown("""
         outline: none !important;
     }
 
-    /* --- THE BUTTON: PERMANENT GREEN + HOVER POP --- */
+    /* --- THE BUTTON --- */
     div.stButton > button:first-child { 
         background-color: #32cd32 !important; 
         color: #000000 !important;           
@@ -62,13 +62,12 @@ st.markdown("""
         border-radius: 12px !important; 
         height: 4.5rem !important; 
         border: none !important; 
-        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease !important;
+        transition: transform 0.2s ease;
         margin-top: 20px !important;
     }
 
     div.stButton > button:first-child:hover { 
-        transform: scale(1.04) !important; 
-        box-shadow: 0 12px 24px rgba(50, 205, 50, 0.3) !important; 
+        transform: scale(1.02) !important; 
     }
 
     /* Result UI Cards */
@@ -102,27 +101,49 @@ with st.container():
     submit = st.button("RUN DEEP MARKET ANALYSIS")
 
 # --- 5. EXECUTION ENGINE ---
-# --- PASTE THIS NEW DEBUG BLOCK ---
-try:
-    # Attempting the sync
-    response = supabase.table("car_logs").insert({
-        "brand": brand,
-        "model": model,
-        "year": year,
-        "price": data["price"],
-        "miles": miles,
-        "logic": data["why"]
-    }).execute()
-    st.toast("✅ Logged to Admin Dashboard")
-except Exception as e:
-    # This will now show a RED box with the EXACT technical reason for the failure
-    st.error(f"DETAILED SYNC ERROR: {e}")
+if submit and brand and model:
+    with st.spinner("Analyzing Market Data..."):
+        clean_trim = trim.strip() if trim else ""
+        full_name = f"{year} {brand} {model} {clean_trim}".strip().replace("  ", " ")
+        
+        search_results = deep_market_search(f"{full_name} specs and market price")
+        
+        try:
+            # AI Prompt for Accuracy
+            prompt = f"Verify and value {full_name} at {miles} miles. Use context: {search_results}. Return JSON: {{'exists': bool, 'price': 'str', 'trend': 'str', 'specs': {{'engine': 'str', 'hp': 'str', 'zero_sixty': 'str', 'top': 'str'}}, 'why': 'str'}}"
+            
+            response = client_groq.chat.completions.create(
+                messages=[{"role":"user","content":prompt}],
+                model="llama-3.3-70b-versatile",
+                temperature=0.1
+            ).choices[0].message.content
+
+            data = json.loads(response.replace('```json', '').replace('```', '').strip())
+
+            if not data.get("exists", True):
+                st.error(f"Analysis Rejected: {data['why']}")
+            else:
+                # --- SUPABASE DEBUG LOGGING ---
+                try:
+                    supabase.table("car_logs").insert({
+                        "brand": brand,
+                        "model": model,
+                        "year": year,
+                        "price": data["price"],
+                        "miles": miles,
+                        "logic": data["why"]
+                    }).execute()
+                    st.toast("✅ Logged to Admin Dashboard")
+                except Exception as e:
+                    # Capture exact error
+                    st.error(f"DETAILED SYNC ERROR: {e}") 
+
                 # --- DISPLAY RESULTS ---
                 st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
                 
-                c1, c2 = st.columns(2)
-                c1.markdown(f'<div class="stat-card"><small>ESTIMATED VALUE</small><h1 class="green-text">{data["price"]}</h1></div>', unsafe_allow_html=True)
-                c2.markdown(f'<div class="stat-card"><small>MARKET TREND</small><h1>{data["trend"]}</h1></div>', unsafe_allow_html=True)
+                res_c1, res_c2 = st.columns(2)
+                res_c1.markdown(f'<div class="stat-card"><small>ESTIMATED VALUE</small><h1 class="green-text">{data["price"]}</h1></div>', unsafe_allow_html=True)
+                res_c2.markdown(f'<div class="stat-card"><small>MARKET TREND</small><h1>{data["trend"]}</h1></div>', unsafe_allow_html=True)
 
                 p1, p2, p3, p4 = st.columns(4)
                 p1.markdown(f'<div class="stat-card"><small>ENGINE</small><h3>{data["specs"]["engine"]}</h3></div>', unsafe_allow_html=True)
@@ -132,5 +153,5 @@ except Exception as e:
 
                 st.markdown(f'<div class="insight-box"><b>Valuation Logic:</b> {data["why"]}</div>', unsafe_allow_html=True)
 
-        except Exception:
-            st.error("Market analysis timeout. Please try again.")
+        except Exception as e:
+            st.error(f"Market analysis error: {e}")
