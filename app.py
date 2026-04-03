@@ -1,7 +1,10 @@
 import streamlit as st
 from groq import Groq
 from duckduckgo_search import DDGS
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 import json
+from datetime import datetime
 
 # --- 1. SETUP ---
 groq_key = st.secrets.get("GROQ_API_KEY")
@@ -11,6 +14,12 @@ if not groq_key:
 
 client_groq = Groq(api_key=groq_key)
 st.set_page_config(page_title="Run&Drive AI | Market Pro", layout="centered")
+
+# Initialize Google Sheets Connection
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+except Exception:
+    st.error("Google Sheets connection not configured in Secrets.")
 
 # --- 2. CSS: ALL PREVIOUS STYLES (BUTTON, FOCUS, HOVER) ---
 st.markdown("""
@@ -92,35 +101,37 @@ with st.container():
     
     submit = st.button("RUN DEEP MARKET ANALYSIS")
 
-# --- 5. EXECUTION ENGINE WITH REALITY CHECK ---
+# --- 5. EXECUTION ENGINE WITH REALITY CHECK & LOGGING ---
 if submit and brand and model:
     with st.spinner("Verifying Vehicle Authenticity..."):
-        full_name = f"{year} {brand} {model} {trim}"
+        # Handle optional trim
+        clean_trim = trim.strip() if trim else ""
+        full_name = f"{year} {brand} {model} {clean_trim}".strip().replace("  ", " ")
+        
         search_data = deep_market_search(f"{full_name} specs production years and price")
         
         try:
-            # PROMPT UPDATED: Added an "exists" check to stop hallucinations
+            # AI Prompt with Exists check
             prompt = f"""
             Task: Verify and value the following vehicle: {full_name}.
             Search Context: {search_data}
             
             STRICT INSTRUCTIONS:
-            1. First, determine if this vehicle actually exists. If the brand is made up, the model doesn't exist, or that specific model was not produced in {year}, set "exists" to false.
-            2. If "exists" is false, do not provide any pricing or specs. Explain why in "why".
-            3. If it exists, provide a valuation for {miles} miles. 
-            4. For "hp", provide numbers only.
+            1. Determine if this vehicle exists. If fake or wrong year, set "exists" to false.
+            2. If real, provide valuation for {miles} miles. 
+            3. For "hp", provide numbers only.
             
             Return strictly as JSON:
             {{
               "exists": true/false,
-              "price": "[Price or 'N/A']",
-              "trend": "[Status or 'N/A']",
+              "price": "[Price]",
+              "trend": "[Status]",
               "specs": {{"engine": "N/A", "hp": "N/A", "zero_sixty": "N/A", "top": "N/A"}},
               "why": "[Explanation]"
             }}
             """
             
-            response = client_gro_q = client_groq.chat.completions.create(
+            response = client_groq.chat.completions.create(
                 messages=[{"role":"user","content":prompt}],
                 model="llama-3.3-70b-versatile",
                 temperature=0.1
@@ -131,6 +142,26 @@ if submit and brand and model:
             if not data.get("exists", True):
                 st.error(f"Analysis Rejected: {data['why']}")
             else:
+                # --- GOOGLE SHEETS LOGGING (ADMIN DATA COLLECTION) ---
+                try:
+                    log_entry = pd.DataFrame([{
+                        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "Brand": brand,
+                        "Model": model,
+                        "Trim": clean_trim,
+                        "Year": year,
+                        "Miles": miles,
+                        "Price_Estimate": data["price"],
+                        "AI_Logic": data["why"]
+                    }])
+                    
+                    # Update the sheet
+                    existing_data = conn.read()
+                    updated_df = pd.concat([existing_data, log_entry], ignore_index=True)
+                    conn.update(data=updated_df)
+                except Exception as e:
+                    st.warning("⚠️ Result generated but failed to sync to Admin Logs.")
+
                 # --- HP DISPLAY FIX ---
                 formatted_hp = f"{data['specs']['hp']} HP"
 
@@ -149,5 +180,5 @@ if submit and brand and model:
 
                 st.markdown(f'<div class="insight-box"><b>Valuation Logic:</b> {data["why"]}</div>', unsafe_allow_html=True)
 
-        except:
+        except Exception as e:
             st.error("Error connecting to market data.")
