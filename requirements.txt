@@ -1,3 +1,5 @@
 streamlit
 groq
 duckduckgo-search
+st-gsheets-connection
+pandas
