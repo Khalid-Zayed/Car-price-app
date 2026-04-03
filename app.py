@@ -102,46 +102,21 @@ with st.container():
     submit = st.button("RUN DEEP MARKET ANALYSIS")
 
 # --- 5. EXECUTION ENGINE ---
-if submit and brand and model:
-    with st.spinner("Analyzing Market Data..."):
-        clean_trim = trim.strip() if trim else ""
-        full_name = f"{year} {brand} {model} {clean_trim}".strip().replace("  ", " ")
-        
-        search_results = deep_market_search(f"{full_name} specs and market price")
-        
-        try:
-            # PROMPT: STRICT VERIFICATION TO STOP FAKE CARS
-            prompt = f"""
-            Verify and value {full_name} at {miles} miles. Use context: {search_results}. 
-            Check if this model/year/trim actually exists. If it's a joke, fake name, or didn't exist in {year}, set 'exists' to false.
-            Return JSON: {{'exists': bool, 'price': 'str', 'trend': 'str', 'specs': {{'engine': 'str', 'hp': 'str', 'zero_sixty': 'str', 'top': 'str'}}, 'why': 'str'}}
-            """
-            
-            response = client_groq.chat.completions.create(
-                messages=[{"role":"user","content":prompt}],
-                model="llama-3.3-70b-versatile",
-                temperature=0.1
-            ).choices[0].message.content
-
-            data = json.loads(response.replace('```json', '').replace('```', '').strip())
-
-            if not data.get("exists", True):
-                st.error(f"Analysis Rejected: {data['why']}")
-            else:
-                # --- SUPABASE LOGGING ---
-                try:
-                    supabase.table("car_logs").insert({
-                        "brand": brand,
-                        "model": model,
-                        "year": year,
-                        "price": data["price"],
-                        "miles": miles,
-                        "logic": data["why"]
-                    }).execute()
-                    st.toast("✅ Logged to Admin Dashboard")
-                except Exception as e:
-                    st.warning(f"⚠️ Log Error: {e}")
-
+# --- PASTE THIS NEW DEBUG BLOCK ---
+try:
+    # Attempting the sync
+    response = supabase.table("car_logs").insert({
+        "brand": brand,
+        "model": model,
+        "year": year,
+        "price": data["price"],
+        "miles": miles,
+        "logic": data["why"]
+    }).execute()
+    st.toast("✅ Logged to Admin Dashboard")
+except Exception as e:
+    # This will now show a RED box with the EXACT technical reason for the failure
+    st.error(f"DETAILED SYNC ERROR: {e}")
                 # --- DISPLAY RESULTS ---
                 st.markdown(f"<h2 style='text-align:center; color:black; margin-top:40px;'>{full_name}</h2>", unsafe_allow_html=True)
                 
